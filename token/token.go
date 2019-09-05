@@ -79,35 +79,66 @@ type Token interface {
 	Column() int
 }
 
-type Literal struct {
-	t       Type
+type NumberLiteral struct {
+	literal string
+	base    int
+	line    int
+	column  int
+}
+
+func (l *NumberLiteral) Type() Type {
+	return Number
+}
+
+func (l *NumberLiteral) String() string {
+	return l.literal
+}
+
+func (l *NumberLiteral) Line() int {
+	return l.line
+}
+
+func (l *NumberLiteral) Column() int {
+	return l.column
+}
+
+func (l *NumberLiteral) Base() int {
+	return l.base
+}
+
+func NewNumberLiteral(literal string, base, line, column int) *NumberLiteral {
+	return &NumberLiteral{
+		literal: literal,
+		base:    base,
+		line:    line,
+		column:  column,
+	}
+}
+
+type StringLiteral struct {
 	literal string
 	line    int
 	column  int
 }
 
-func (l *Literal) Type() Type {
-	return l.t
+func (l *StringLiteral) Type() Type {
+	return String
 }
 
-func (l *Literal) String() string {
-	if l.t == String {
-		return `"` + common.Escape(bytes.NewBufferString(l.literal)) + `"`
-	}
-	return l.literal
+func (l *StringLiteral) String() string {
+	return `"` + common.Escape(bytes.NewBufferString(l.literal)) + `"`
 }
 
-func (l *Literal) Line() int {
+func (l *StringLiteral) Line() int {
 	return l.line
 }
 
-func (l *Literal) Column() int {
+func (l *StringLiteral) Column() int {
 	return l.column
 }
 
-func NewLiteral(t Type, literal string, line, column int) *Literal {
-	return &Literal{
-		t:       t,
+func NewStringLiteral(literal string, line, column int) *StringLiteral {
+	return &StringLiteral{
 		literal: literal,
 		line:    line,
 		column:  column,

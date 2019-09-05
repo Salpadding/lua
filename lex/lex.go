@@ -210,7 +210,7 @@ func (l *Lexer) NextToken() (token.Token, error) {
 		}
 		l.ReadChar()
 		l.ReadChar()
-		return token.NewLiteral(token.String, buf.String(), line, column), nil
+		return token.NewStringLiteral(buf.String(), line, column), nil
 	case '"':
 		line, column := l.line, l.column
 		l.ReadChar()
@@ -224,7 +224,7 @@ func (l *Lexer) NextToken() (token.Token, error) {
 		if err != nil {
 			return nil, err
 		}
-		return token.NewLiteral(token.String, escaped, line, column), nil
+		return token.NewStringLiteral(escaped, line, column), nil
 	default:
 		return l.readLiteralOrKeyword()
 	}
@@ -259,7 +259,7 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 	}
 	// peek snd rune
 	if len([]rune(str)) == 1 {
-		return token.NewLiteral(token.Number, str, line, column), nil
+		return token.NewNumberLiteral(str, 10, line, column), nil
 	}
 	snd := []rune(str)[1]
 	if snd == 'x' {
@@ -267,11 +267,11 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 		if err != nil {
 			return nil, err
 		}
-		return token.NewLiteral(token.Number, str, line, column), nil
+		return token.NewNumberLiteral(str, 16, line, column), nil
 	}
 	_, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		return nil, err
 	}
-	return token.NewLiteral(token.Number, str, line, column), nil
+	return token.NewNumberLiteral(str, 10, line, column), nil
 }
