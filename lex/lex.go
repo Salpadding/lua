@@ -230,7 +230,7 @@ func (l *Lexer) NextToken() (token.Token, error) {
 			l.ReadChar()
 		}
 		l.ReadChar()
-		escaped, err := l.escape(&buf)
+		escaped, err := l.fromEscaped(&buf)
 		if err != nil{
 			return nil, err
 		}
@@ -240,7 +240,7 @@ func (l *Lexer) NextToken() (token.Token, error) {
 	}
 }
 
-func (l *Lexer) escape(rd io.RuneReader) (string, error) {
+func (l *Lexer) fromEscaped(rd io.RuneReader) (string, error) {
 	var buf bytes.Buffer
 	for {
 		r, _, err := rd.ReadRune()
@@ -249,6 +249,7 @@ func (l *Lexer) escape(rd io.RuneReader) (string, error) {
 		}
 		if r != '\\' {
 			buf.WriteRune(r)
+			continue
 		}
 		n, _, err := rd.ReadRune()
 		if err != nil {

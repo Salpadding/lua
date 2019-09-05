@@ -90,7 +90,7 @@ func (l *Literal) Type() Type {
 
 func (l *Literal) String() string {
 	if l.t == String{
-		return fmt.Sprintf(`"%s"`, l.literal)
+		return fmt.Sprintf(`String: %s`, l.literal)
 	}
 	return l.literal
 }
