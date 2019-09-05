@@ -10,15 +10,18 @@ import (
 
 func Test1(t *testing.T) {
 	l := &Lexer{
-		RuneReader: bytes.NewBufferString("12345\r\n123\n123\r123\r\n\r\n123"),
+		RuneReader: bytes.NewBufferString("\r\r12345\r\n123\n123\r123\r\n\r\n123"),
 		current:    nil,
 		next:       nil,
-		line:       0,
+		line:       1,
 		column:     0,
 	}
 	for l.current == nil || !l.current.isEOF() {
 		l.ReadChar()
 		if l.current != nil && !l.current.isEOF() && l.column != 0 {
+			if l.current.rune() == '\n' || l.current.rune() == '\r'{
+				continue
+			}
 			s := string(l.current.rune())
 			fmt.Printf("%s at line %d   column %d\n", s, l.line, l.column)
 		}

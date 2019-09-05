@@ -45,7 +45,7 @@ type Lexer struct {
 func New(reader io.RuneReader) *Lexer {
 	l := &Lexer{
 		RuneReader: reader,
-		line:       0,
+		line:       1,
 		column:     0,
 	}
 	l.ReadChar()
@@ -65,17 +65,18 @@ func (l *Lexer) readChar() Char {
 func (l *Lexer) ReadChar() Char {
 	l.current = l.next
 	l.next = l.readChar()
-	if l.current == nil || l.next == nil {
+	if l.current == nil {
 		return l.current
 	}
-	if l.current.rune() == '\r' && l.next.rune() == '\n' {
-		l.current = l.next
-		l.next = l.readChar()
-	}
-	if l.current.rune() == '\r' && l.next.rune() != '\n' {
-		l.current = character('\n')
+	if l.current.isEOF() {
+		return l.current
 	}
 	l.column++
+	if l.current.rune() == '\r' && l.next.rune() != '\n' {
+		l.column = 0
+		l.line++
+		return l.current
+	}
 	if l.current.rune() == '\n' {
 		l.column = 0
 		l.line++
