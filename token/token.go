@@ -30,6 +30,20 @@ var Operators = map[string]Type{
 	"#":   Len,
 }
 
+var Delimiters = map[string]Type{
+	"...": Varing,
+	"::":  Label,
+	",":   Comma,
+	";":   Semicolon,
+	"(":   LeftParenthesis,
+	")":   RightParenthesis,
+	"{":   LeftBrace,    // {
+	"}":   RightBrace,   // }
+	"[":   LeftBracket,  // [
+	"]":   RightBracket, // ]
+	":":   Colon,
+}
+
 var Keywords = map[string]Type{
 	"break":    Break,
 	"do":       Do,
@@ -177,4 +191,40 @@ func (e EOF) Line() int {
 
 func (e EOF) Column() int {
 	return 0
+}
+
+
+type Delimiter struct{
+	t      Type
+	line   int
+	column int
+}
+
+func NewDelimiter(op string, line, column int) *Delimiter {
+	return &Delimiter{
+		t:      Delimiters[op],
+		line:   line,
+		column: column,
+	}
+}
+
+func (d *Delimiter) Type() Type {
+	return d.t
+}
+
+func (d *Delimiter) String() string {
+	for k, v := range Delimiters {
+		if v == d.t {
+			return k
+		}
+	}
+	return ""
+}
+
+func (d *Delimiter) Line() int {
+	return d.line
+}
+
+func (d *Delimiter) Column() int {
+	return d.column
 }

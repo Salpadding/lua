@@ -43,3 +43,43 @@ func TestSkipComments(t *testing.T){
 	}
 	fmt.Println(tokens)
 }
+
+func TestOperators(t *testing.T){
+	l := New(bytes.NewBufferString(`
+		+ - * % & | ^ = == #
+`))
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil{
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+	}
+	for _, tk := range tokens{
+		fmt.Println(tk.String())
+	}
+}
+
+func TestDelimiters(t *testing.T){
+	l := New(bytes.NewBufferString(`
+	 , ;  (  )  [ ]
+`))
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil{
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+	}
+	for _, tk := range tokens{
+		fmt.Println(tk.String())
+	}
+}

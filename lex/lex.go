@@ -109,7 +109,7 @@ func (l *Lexer) skipComment() {
 	}
 }
 
-func(l *Lexer) skipWhiteSpaces(){
+func (l *Lexer) skipWhiteSpaces() {
 	// skip white spaces
 	for !l.current.isEOF() && isWhiteSpace(l.current.rune()) {
 		l.ReadChar()
@@ -126,6 +126,36 @@ func (l *Lexer) NextToken() (token.Token, error) {
 	}
 	if l.current.isEOF() {
 		return token.EOF("EOF"), nil
+	}
+	switch l.current.rune() {
+	case '=':
+		if l.next.rune() == '=' {
+			tk := token.NewOperator("==", l.line, l.column)
+			l.ReadChar()
+			l.ReadChar()
+			return tk, nil
+		}
+		tk := token.NewOperator("=", l.line, l.column)
+		l.ReadChar()
+		return tk, nil
+	case '+', '-', '*', '%', '&', '|', '^', '#':
+		tk := token.NewOperator(string(l.current.rune()), l.line, l.column)
+		l.ReadChar()
+		return tk, nil
+	case ',', ';', '(', ')', '[', ']':
+		tk := token.NewDelimiter(string(l.current.rune()), l.line, l.column)
+		l.ReadChar()
+		return tk, nil
+	case '/':
+		if l.next.rune() == '/' {
+			tk := token.NewOperator("//", l.line, l.column)
+			l.ReadChar()
+			l.ReadChar()
+			return tk, nil
+		}
+		tk := token.NewOperator("/", l.line, l.column)
+		l.ReadChar()
+		return tk, nil
 	}
 	return nil, nil
 }
