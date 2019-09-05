@@ -16,9 +16,9 @@ func (e eof) rune() rune { return 0 }
 
 func (e eof) isEOF() bool { return true }
 
-type character rune
+type character string
 
-func (c character) rune() rune { return rune(c) }
+func (c character) rune() rune { return rune(c[0]) }
 
 func (c character) isEOF() bool { return false }
 
@@ -70,29 +70,59 @@ func (l *Lexer) ReadChar() Char {
 	return l.current
 }
 
-func isWhiteSpace(c Char) bool {
-	if c.isEOF() {
-		return false
-	}
-	switch c.rune() {
+func isWhiteSpace(r rune) bool {
+	switch r {
 	case '\t', '\n', '\v', '\f', '\r', ' ':
 		return true
 	}
 	return false
 }
 
-func (l *Lexer) NextToken() (token.Token, error) {
-	// skip white spaces
-	for isWhiteSpace(l.current) {
-		l.ReadChar()
+func (l *Lexer) skipComment() {
+	// skip comments
+	if l.current.rune() != '-' || l.next.rune() != '-' {
+		return
 	}
-	// skip single line comments
-	if l.current.rune() == '-' && l.next.rune() == '-' {
-		l.ReadChar()
-		l.ReadChar()
+	l.ReadChar()
+	l.ReadChar()
+	if l.current.rune() != '[' || l.next.rune() != '[' {
 		for !l.current.isEOF() && l.current.rune() != '\n' {
 			l.ReadChar()
 		}
+		l.ReadChar()
+		return
+	}
+	l.ReadChar()
+	l.ReadChar()
+	for !l.current.isEOF() {
+		if l.current.rune() != '-' || l.next.rune() != '-' {
+			l.ReadChar()
+			continue
+		}
+		l.ReadChar()
+		l.ReadChar()
+		if l.current.rune() == ']' && l.next.rune() == ']' {
+			l.ReadChar()
+			l.ReadChar()
+			break
+		}
+	}
+}
+
+func(l *Lexer) skipWhiteSpaces(){
+	// skip white spaces
+	for !l.current.isEOF() && isWhiteSpace(l.current.rune()) {
+		l.ReadChar()
+	}
+}
+
+func (l *Lexer) NextToken() (token.Token, error) {
+	// 跳过空白
+	l.skipWhiteSpaces()
+	// 发现注释则跳过
+	if l.current.rune() == '-' && l.next.rune() == '-' {
+		l.skipComment()
+		return l.NextToken()
 	}
 	if l.current.isEOF() {
 		return token.EOF("EOF"), nil
