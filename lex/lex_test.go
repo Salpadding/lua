@@ -26,10 +26,11 @@ func Test1(t *testing.T) {
 }
 
 func TestSkipComments(t *testing.T) {
-	l := New(bytes.NewBufferString(`-- 这是一行注释
+	l := New(bytes.NewBufferString(`-- 这是单行注释
 		--[[ 这是多行
 		多行注释
 		--]]
+		-- comments starts with two '-'
 `))
 	var tokens []token.Token
 	for {
