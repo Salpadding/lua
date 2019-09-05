@@ -86,7 +86,7 @@ func TestDelimiters(t *testing.T){
 
 func TestLiteralKeywords(t *testing.T){
 	l := New(bytes.NewBufferString(`
-	 for break goto function 12 333 "aaaa" [[
+	 for break goto function 12 333 "aaaa\n\r" [[
 aaa ff
 ]]
 `))

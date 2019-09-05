@@ -2,10 +2,24 @@ package lex
 
 import (
 	"bytes"
+	"errors"
 	"github.com/Salpadding/lua/token"
 	"io"
 	"strconv"
 )
+
+var escapes = map[rune]rune{
+	'a':  '\a',
+	'b':  '\b',
+	'f':  '\f',
+	'n':  '\n',
+	'r':  '\r',
+	't':  '\t',
+	'v':  '\v',
+	'"':  '"',
+	'\\': '\\',
+	'\'': '\'',
+}
 
 var ops = map[rune]map[rune]bool{
 	'=': {'=': true},
@@ -216,10 +230,38 @@ func (l *Lexer) NextToken() (token.Token, error) {
 			l.ReadChar()
 		}
 		l.ReadChar()
-		return token.NewLiteral(token.String, buf.String(), line, column), nil
+		escaped, err := l.escape(&buf)
+		if err != nil{
+			return nil, err
+		}
+		return token.NewLiteral(token.String, escaped, line, column), nil
 	default:
 		return l.readLiteralOrKeyword()
 	}
+}
+
+func (l *Lexer) escape(rd io.RuneReader) (string, error) {
+	var buf bytes.Buffer
+	for {
+		r, _, err := rd.ReadRune()
+		if err != nil {
+			break
+		}
+		if r != '\\' {
+			buf.WriteRune(r)
+		}
+		n, _, err := rd.ReadRune()
+		if err != nil {
+			return "", errors.New("unexpected string end after \\")
+		}
+		switch n {
+		case 'a', 'b', 'f', 'n', 'r', 't', 'v', '"', '\'', '\\':
+			buf.WriteRune(escapes[n])
+		default:
+			buf.WriteRune(n)
+		}
+	}
+	return buf.String(), nil
 }
 
 func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
