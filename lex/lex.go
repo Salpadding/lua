@@ -61,6 +61,7 @@ func (l *Lexer) readChar() Char {
 	return character(next)
 }
 
+// replace "\rabc" -> "\nabc" "\r\nabc" -> "\nabc"
 func (l *Lexer) ReadChar() Char {
 	l.current = l.next
 	l.next = l.readChar()
@@ -131,9 +132,9 @@ func (l *Lexer) skipWhiteSpaces() {
 }
 
 func (l *Lexer) NextToken() (token.Token, error) {
-	// 跳过空白
+	// skip white spaces
 	l.skipWhiteSpaces()
-	// 发现注释则跳过
+	// skip comments
 	if l.current.rune() == '-' && l.next.rune() == '-' {
 		l.skipComment()
 		return l.NextToken()
@@ -262,6 +263,7 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 		return token.NewNumberLiteral(str, 10, line, column), nil
 	}
 	snd := []rune(str)[1]
+	// try to parse as hex number
 	if snd == 'x' {
 		_, err := strconv.ParseInt(str[2:], 16, 64)
 		if err != nil {
@@ -269,6 +271,7 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 		}
 		return token.NewNumberLiteral(str, 16, line, column), nil
 	}
+	// try to parse as digital number
 	_, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		return nil, err
