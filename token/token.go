@@ -1,7 +1,9 @@
 package token
 
 import (
-	"fmt"
+	"bytes"
+
+	"github.com/Salpadding/lua/common"
 )
 
 type Type int
@@ -89,8 +91,8 @@ func (l *Literal) Type() Type {
 }
 
 func (l *Literal) String() string {
-	if l.t == String{
-		return fmt.Sprintf(`String: %s`, l.literal)
+	if l.t == String {
+		return `"` + common.Escape(bytes.NewBufferString(l.literal)) + `"`
 	}
 	return l.literal
 }

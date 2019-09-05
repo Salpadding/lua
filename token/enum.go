@@ -32,7 +32,7 @@ const (
 	LeftShift          // <<
 	RightShift         // >>
 	Concat             // ..
-	Len // #
+	Len                // #
 
 	// Delimiters
 	Varing           // ...
