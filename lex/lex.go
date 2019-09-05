@@ -30,7 +30,7 @@ func (e eof) isEOF() bool { return true }
 
 type character string
 
-func (c character) rune() rune { return rune(c[0]) }
+func (c character) rune() rune { return []rune(c)[0] }
 
 func (c character) isEOF() bool { return false }
 
@@ -159,7 +159,7 @@ func (l *Lexer) NextToken() (token.Token, error) {
 		tk := token.NewOperator(string(l.current.rune()), l.line, l.column)
 		l.ReadChar()
 		return tk, nil
-	case ',', ';', '(', ')', ']':
+	case ',', ';', '(', ')', ']', '{', '}':
 		tk := token.NewDelimiter(string(l.current.rune()), l.line, l.column)
 		l.ReadChar()
 		return tk, nil
@@ -230,6 +230,10 @@ func (l *Lexer) NextToken() (token.Token, error) {
 	}
 }
 
+func (l *Lexer) isNumber(r rune) bool {
+	return '0' <= r && r <= '9'
+}
+
 func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 	var buf bytes.Buffer
 	line, column := l.line, l.column
@@ -238,17 +242,36 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 		l.ReadChar()
 	}
 	str := buf.String()
+	// and or not is operator
 	_, ok := token.Operators[str]
 	if ok {
 		return token.NewOperator(str, line, column), nil
 	}
+	// keyword lookup
 	_, ok = token.Keywords[str]
 	if ok {
 		return token.NewKeyword(str, line, column), nil
 	}
-	_, err := strconv.ParseFloat(str, 64)
-	if err == nil {
+	fst := []rune(str)[0]
+	// id starts with non-digital
+	if !l.isNumber(fst) {
+		return token.NewID(str, line, column), nil
+	}
+	// peek snd rune
+	if len([]rune(str)) == 1 {
 		return token.NewLiteral(token.Number, str, line, column), nil
 	}
-	return token.NewID(str, line, column), nil
+	snd := []rune(str)[1]
+	if snd == 'x' {
+		_, err := strconv.ParseInt(str[2:], 16, 64)
+		if err != nil {
+			return nil, err
+		}
+		return token.NewLiteral(token.Number, str, line, column), nil
+	}
+	_, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		return nil, err
+	}
+	return token.NewLiteral(token.Number, str, line, column), nil
 }

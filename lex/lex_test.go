@@ -42,13 +42,22 @@ func TestSkipComments(t *testing.T) {
 			break
 		}
 	}
+	if len(tokens) < 0{
+		t.Fail()
+	}
+	if tokens[0].Type() != token.EndOfFile{
+		t.Fail()
+	}
 	fmt.Println(tokens)
 }
 
 func TestOperators(t *testing.T) {
-	l := New(bytes.NewBufferString(`
-		+ - * % & | ^ = == # <= < >= > << >> ~ ~= / // ~ ~=
-`))
+	var buf bytes.Buffer
+	for k := range token.Operators{
+		buf.WriteString(k)
+		buf.WriteRune(' ')
+	}
+	l := New(&buf)
 	var tokens []token.Token
 	for {
 		tk, err := l.NextToken()
@@ -61,14 +70,24 @@ func TestOperators(t *testing.T) {
 		}
 	}
 	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		_, ok := tk.(*token.Operator)
+		if !ok{
+			t.Fail()
+		}
 		fmt.Println(tk.String())
 	}
 }
 
 func TestDelimiters(t *testing.T) {
-	l := New(bytes.NewBufferString(`
-	 , ;  (  )  [ ] : :: . .. ... . .. ...
-`))
+	var buf bytes.Buffer
+	for k := range token.Delimiters{
+		buf.WriteString(k)
+		buf.WriteRune(' ')
+	}
+	l := New(&buf)
 	var tokens []token.Token
 	for {
 		tk, err := l.NextToken()
@@ -81,15 +100,52 @@ func TestDelimiters(t *testing.T) {
 		}
 	}
 	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		_, ok := tk.(*token.Delimiter)
+		if !ok{
+			t.Fail()
+		}
 		fmt.Println(tk.String())
 	}
 }
 
-func TestLiteralKeywords(t *testing.T) {
+func TestKeywords(t *testing.T) {
+	var buf bytes.Buffer
+	for k := range token.Keywords{
+		buf.WriteString(k)
+		buf.WriteRune(' ')
+	}
+	l := New(&buf)
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil {
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile {
+			break
+		}
+	}
+	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		_, ok := tk.(*token.Keyword)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(tk.String())
+	}
+}
+
+func TestStringLiteral(t *testing.T){
 	l := New(bytes.NewBufferString(`
-	 for break goto function 12 333 "aaaa\n\r" [[
-aaa ff
-]]
+	[[ 这是多行文本
+ ++++++ -----
+ ]] "这是单行文本"
 `))
 	var tokens []token.Token
 	for {
@@ -103,6 +159,39 @@ aaa ff
 		}
 	}
 	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		if tk.Type() != token.String{
+			t.Fail()
+		}
 		fmt.Println(tk.String())
 	}
 }
+
+func TestNumberLiteral(t *testing.T){
+	l := New(bytes.NewBufferString(`
+	1 2 3 3.1 333 3e10 0303 0xffff
+`))
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil {
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile {
+			break
+		}
+	}
+	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		if tk.Type() != token.Number{
+			t.Fail()
+		}
+		fmt.Println(tk.String())
+	}
+}
+
