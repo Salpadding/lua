@@ -1,5 +1,9 @@
 package token
 
+import (
+	"fmt"
+)
+
 type Type int
 
 var Operators = map[string]Type{
@@ -85,6 +89,9 @@ func (l *Literal) Type() Type {
 }
 
 func (l *Literal) String() string {
+	if l.t == String{
+		return fmt.Sprintf(`"%s"`, l.literal)
+	}
 	return l.literal
 }
 
@@ -193,8 +200,7 @@ func (e EOF) Column() int {
 	return 0
 }
 
-
-type Delimiter struct{
+type Delimiter struct {
 	t      Type
 	line   int
 	column int
@@ -226,5 +232,35 @@ func (d *Delimiter) Line() int {
 }
 
 func (d *Delimiter) Column() int {
+	return d.column
+}
+
+type ID struct {
+	name   string
+	line   int
+	column int
+}
+
+func NewID(name string, line, column int) *ID {
+	return &ID{
+		name:   name,
+		line:   line,
+		column: column,
+	}
+}
+
+func (d *ID) Type() Type {
+	return Identifier
+}
+
+func (d *ID) String() string {
+	return d.name
+}
+
+func (d *ID) Line() int {
+	return d.line
+}
+
+func (d *ID) Column() int {
 	return d.column
 }

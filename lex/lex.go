@@ -1,9 +1,19 @@
 package lex
 
 import (
+	"bytes"
 	"github.com/Salpadding/lua/token"
 	"io"
+	"strconv"
 )
+
+var ops = map[rune]map[rune]bool{
+	'=': {'=': true},
+	'<': {'=': true, '<': true},
+	'>': {'=': true, '>': true},
+	'~': {'=': true},
+	'/': {'/': true},
+}
 
 type Char interface {
 	rune() rune
@@ -127,35 +137,110 @@ func (l *Lexer) NextToken() (token.Token, error) {
 	if l.current.isEOF() {
 		return token.EOF("EOF"), nil
 	}
-	switch l.current.rune() {
-	case '=':
-		if l.next.rune() == '=' {
-			tk := token.NewOperator("==", l.line, l.column)
-			l.ReadChar()
+	r := l.current.rune()
+	switch r {
+	case '=', '<', '>', '~', '/':
+		n := l.next.rune()
+		ok := ops[r][n]
+		if !ok {
+			tk := token.NewOperator(string(r), l.line, l.column)
 			l.ReadChar()
 			return tk, nil
 		}
-		tk := token.NewOperator("=", l.line, l.column)
+		tk := token.NewOperator(string(r)+string(n), l.line, l.column)
+		l.ReadChar()
 		l.ReadChar()
 		return tk, nil
 	case '+', '-', '*', '%', '&', '|', '^', '#':
 		tk := token.NewOperator(string(l.current.rune()), l.line, l.column)
 		l.ReadChar()
 		return tk, nil
-	case ',', ';', '(', ')', '[', ']':
+	case ',', ';', '(', ')', ']':
 		tk := token.NewDelimiter(string(l.current.rune()), l.line, l.column)
 		l.ReadChar()
 		return tk, nil
-	case '/':
-		if l.next.rune() == '/' {
-			tk := token.NewOperator("//", l.line, l.column)
-			l.ReadChar()
+	case ':':
+		n := l.next.rune()
+		if n != ':' {
+			tk := token.NewDelimiter(string(r), l.line, l.column)
 			l.ReadChar()
 			return tk, nil
 		}
-		tk := token.NewOperator("/", l.line, l.column)
+		tk := token.NewDelimiter(string(r)+string(n), l.line, l.column)
+		l.ReadChar()
 		l.ReadChar()
 		return tk, nil
+	case '.':
+		n := l.next.rune()
+		if n != '.' {
+			tk := token.NewOperator(string(r), l.line, l.column)
+			l.ReadChar()
+			return tk, nil
+		}
+		l.ReadChar()
+		n = l.next.rune()
+		if n != '.' {
+			tk := token.NewOperator("..", l.line, l.column)
+			l.ReadChar()
+			return tk, nil
+		}
+		tk := token.NewDelimiter("...", l.line, l.column)
+		l.ReadChar()
+		l.ReadChar()
+		return tk, nil
+	case '[':
+		n := l.next.rune()
+		if n != '[' {
+			tk := token.NewDelimiter(string(r), l.line, l.column)
+			l.ReadChar()
+			return tk, nil
+		}
+		// here document
+		line, column := l.line, l.column
+		l.ReadChar()
+		l.ReadChar()
+		var buf bytes.Buffer
+		for !l.current.isEOF() && !(l.current.rune() == ']' && l.next.rune() == ']') {
+			buf.WriteRune(l.current.rune())
+			l.ReadChar()
+		}
+		l.ReadChar()
+		l.ReadChar()
+		return token.NewLiteral(token.String, buf.String(), line, column), nil
+	case '"':
+		line, column := l.line, l.column
+		l.ReadChar()
+		var buf bytes.Buffer
+		for !l.current.isEOF() && l.current.rune() != '"' {
+			buf.WriteRune(l.current.rune())
+			l.ReadChar()
+		}
+		l.ReadChar()
+		return token.NewLiteral(token.String, buf.String(), line, column), nil
+	default:
+		return l.readLiteralOrKeyword()
 	}
-	return nil, nil
+}
+
+func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
+	var buf bytes.Buffer
+	line, column := l.line, l.column
+	for !l.current.isEOF() && !isWhiteSpace(l.current.rune()) {
+		buf.WriteRune(l.current.rune())
+		l.ReadChar()
+	}
+	str := buf.String()
+	_, ok := token.Operators[str]
+	if ok {
+		return token.NewOperator(str, line, column), nil
+	}
+	_, ok = token.Keywords[str]
+	if ok {
+		return token.NewKeyword(str, line, column), nil
+	}
+	_, err := strconv.ParseFloat(str, 64)
+	if err == nil {
+		return token.NewLiteral(token.Number, str, line, column), nil
+	}
+	return token.NewID(str, line, column), nil
 }

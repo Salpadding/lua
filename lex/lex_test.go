@@ -46,7 +46,7 @@ func TestSkipComments(t *testing.T){
 
 func TestOperators(t *testing.T){
 	l := New(bytes.NewBufferString(`
-		+ - * % & | ^ = == #
+		+ - * % & | ^ = == # <= < >= > << >> ~ ~= / // ~ ~=
 `))
 	var tokens []token.Token
 	for {
@@ -66,7 +66,29 @@ func TestOperators(t *testing.T){
 
 func TestDelimiters(t *testing.T){
 	l := New(bytes.NewBufferString(`
-	 , ;  (  )  [ ]
+	 , ;  (  )  [ ] : :: . .. ... . .. ...
+`))
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil{
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+	}
+	for _, tk := range tokens{
+		fmt.Println(tk.String())
+	}
+}
+
+func TestLiteralKeywords(t *testing.T){
+	l := New(bytes.NewBufferString(`
+	 for break goto function 12 333 "aaaa" [[
+aaa ff
+]]
 `))
 	var tokens []token.Token
 	for {
