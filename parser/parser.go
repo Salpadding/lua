@@ -1,11 +1,12 @@
 package parser
 
 import (
+	"io"
+	"strconv"
+
 	"github.com/Salpadding/lua/ast"
 	"github.com/Salpadding/lua/lex"
 	"github.com/Salpadding/lua/token"
-	"io"
-	"strconv"
 )
 
 /*

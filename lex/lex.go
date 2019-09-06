@@ -260,11 +260,11 @@ func (l *Lexer) isHex(r rune) bool {
 	return l.isNumber(r) || ('a' <= r && r <= 'f') || ('A' <= r && r <= 'F')
 }
 
-func(l *Lexer) isLetter(r rune) bool{
+func (l *Lexer) isLetter(r rune) bool {
 	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'
 }
 
-func(l *Lexer) isID(r rune) bool{
+func (l *Lexer) isID(r rune) bool {
 	return r == '_' || l.isLetter(r)
 }
 

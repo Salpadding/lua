@@ -19,7 +19,7 @@ func Test1(t *testing.T) {
 	for l.current == nil || !l.current.isEOF() {
 		l.ReadChar()
 		if l.current != nil && !l.current.isEOF() && l.column != 0 {
-			if l.current.rune() == '\n' || l.current.rune() == '\r'{
+			if l.current.rune() == '\n' || l.current.rune() == '\r' {
 				continue
 			}
 			s := string(l.current.rune())
@@ -46,10 +46,10 @@ func TestSkipComments(t *testing.T) {
 			break
 		}
 	}
-	if len(tokens) < 0{
+	if len(tokens) < 0 {
 		t.Fail()
 	}
-	if tokens[0].Type() != token.EndOfFile{
+	if tokens[0].Type() != token.EndOfFile {
 		t.Fail()
 	}
 	fmt.Println(tokens)
@@ -57,7 +57,7 @@ func TestSkipComments(t *testing.T) {
 
 func TestOperators(t *testing.T) {
 	var buf bytes.Buffer
-	for k := range token.Operators{
+	for k := range token.Operators {
 		buf.WriteString(k)
 		buf.WriteRune(' ')
 	}
@@ -74,11 +74,11 @@ func TestOperators(t *testing.T) {
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
 		_, ok := tk.(*token.Operator)
-		if !ok{
+		if !ok {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
@@ -87,7 +87,7 @@ func TestOperators(t *testing.T) {
 
 func TestDelimiters(t *testing.T) {
 	var buf bytes.Buffer
-	for k := range token.Delimiters{
+	for k := range token.Delimiters {
 		buf.WriteString(k)
 		buf.WriteRune(' ')
 	}
@@ -104,11 +104,11 @@ func TestDelimiters(t *testing.T) {
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
 		_, ok := tk.(*token.Delimiter)
-		if !ok{
+		if !ok {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
@@ -117,7 +117,7 @@ func TestDelimiters(t *testing.T) {
 
 func TestKeywords(t *testing.T) {
 	var buf bytes.Buffer
-	for k := range token.Keywords{
+	for k := range token.Keywords {
 		buf.WriteString(k)
 		buf.WriteRune(' ')
 	}
@@ -134,18 +134,18 @@ func TestKeywords(t *testing.T) {
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
 		_, ok := tk.(*token.Keyword)
-		if !ok{
+		if !ok {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
 	}
 }
 
-func TestStringLiteral(t *testing.T){
+func TestStringLiteral(t *testing.T) {
 	l := New(bytes.NewBufferString(`
 	[[ 这是多行文本
  ++++++ -----
@@ -163,17 +163,17 @@ func TestStringLiteral(t *testing.T){
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
-		if tk.Type() != token.String{
+		if tk.Type() != token.String {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
 	}
 }
 
-func TestNumberLiteral(t *testing.T){
+func TestNumberLiteral(t *testing.T) {
 	l := New(bytes.NewBufferString(`
 	1 2 3 3.1 333 3e10 0303 0xffff
 `))
@@ -189,17 +189,17 @@ func TestNumberLiteral(t *testing.T){
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
-		if tk.Type() != token.Number{
+		if tk.Type() != token.Number {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
 	}
 }
 
-func TestID(t *testing.T){
+func TestID(t *testing.T) {
 	l := New(bytes.NewBufferString(`
 	abc def ghi
 `))
@@ -215,13 +215,12 @@ func TestID(t *testing.T){
 		}
 	}
 	for _, tk := range tokens {
-		if tk.Type() == token.EndOfFile{
+		if tk.Type() == token.EndOfFile {
 			break
 		}
-		if tk.Type() != token.Identifier{
+		if tk.Type() != token.Identifier {
 			t.Fail()
 		}
 		fmt.Println(tk.String())
 	}
 }
-
