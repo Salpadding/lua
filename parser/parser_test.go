@@ -30,7 +30,7 @@ func TestParse0(t *testing.T){
 
 func TestParse1(t *testing.T){
 	p, err := New(bytes.NewBufferString(`
-	2 ^ 10
+	1 ^ 2 ^ 3
 `))
 	if err != nil{
 		t.Error(err)
@@ -50,7 +50,7 @@ func TestParse1(t *testing.T){
 
 func TestParse2(t *testing.T){
 	p, err := New(bytes.NewBufferString(`
-	not 2 ^ true
+	not not true
 `))
 	if err != nil{
 		t.Error(err)
