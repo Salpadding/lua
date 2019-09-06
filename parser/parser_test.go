@@ -47,3 +47,105 @@ func TestParse1(t *testing.T){
 		fmt.Println(exp.String())
 	}
 }
+
+func TestParse2(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	not 2 ^ true
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp2()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse3(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1^200^2*3000 / 100 // 3 % 24 
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp3()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse4(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1^200^2*3000 / 100 + 1 - 300 - -3
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp4()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse5(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1^200^2 .. 1 .. "abc"
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp5()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse6(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	2 << 1 + 2 +3 .. "abc"
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp6()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+

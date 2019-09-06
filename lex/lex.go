@@ -61,7 +61,6 @@ func (l *Lexer) readChar() Char {
 	return character(next)
 }
 
-// replace "\rabc" -> "\nabc" "\r\nabc" -> "\nabc"
 func (l *Lexer) ReadChar() Char {
 	l.current = l.next
 	l.next = l.readChar()
@@ -236,9 +235,9 @@ func (l *Lexer) isNumber(r rune) bool {
 	return '0' <= r && r <= '9'
 }
 
-func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
-	var buf bytes.Buffer
+func (l *Lexer) readIDOrKeyword() (token.Token, error) {
 	line, column := l.line, l.column
+	var buf bytes.Buffer
 	for !l.current.isEOF() && !isWhiteSpace(l.current.rune()) {
 		buf.WriteRune(l.current.rune())
 		l.ReadChar()
@@ -254,28 +253,48 @@ func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
 	if ok {
 		return token.NewKeyword(str, line, column), nil
 	}
-	fst := []rune(str)[0]
-	// id starts with non-digital
+	return token.NewID(str, line, column), nil
+}
+
+func (l *Lexer) isHex(r rune) bool {
+	return l.isNumber(r) || ('a' <= r && r <= 'f') || ('A' <= r && r <= 'F')
+}
+
+func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {
+	line, column := l.line, l.column
+	fst := l.current.rune()
 	if !l.isNumber(fst) {
-		return token.NewID(str, line, column), nil
+		return l.readIDOrKeyword()
 	}
+	// id starts with non-digital
+
 	// peek snd rune
-	if len([]rune(str)) == 1 {
-		return token.NewNumberLiteral(str, 10, line, column), nil
-	}
-	snd := []rune(str)[1]
+	snd := l.next.rune()
 	// try to parse as hex number
-	if snd == 'x' {
-		_, err := strconv.ParseInt(str[2:], 16, 64)
+	if snd == 'x' || snd == 'X' {
+		l.ReadChar()
+		l.ReadChar()
+		var buf bytes.Buffer
+		for !l.current.isEOF() && l.isHex(l.current.rune()) {
+			buf.WriteRune(l.current.rune())
+			l.ReadChar()
+		}
+		str := buf.String()
+		_, err := strconv.ParseInt(str, 16, 64)
 		if err != nil {
 			return nil, err
 		}
 		return token.NewNumberLiteral(str, 16, line, column), nil
 	}
 	// try to parse as digital number
-	_, err := strconv.ParseFloat(str, 64)
+	var buf bytes.Buffer
+	for !l.current.isEOF() && (l.isNumber(l.current.rune()) || l.current.rune() == '.' || l.current.rune() == 'e') {
+		buf.WriteRune(l.current.rune())
+		l.ReadChar()
+	}
+	_, err := strconv.ParseFloat(buf.String(), 64)
 	if err != nil {
 		return nil, err
 	}
-	return token.NewNumberLiteral(str, 10, line, column), nil
+	return token.NewNumberLiteral(buf.String(), 10, line, column), nil
 }

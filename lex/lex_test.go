@@ -199,3 +199,29 @@ func TestNumberLiteral(t *testing.T){
 	}
 }
 
+func TestID(t *testing.T){
+	l := New(bytes.NewBufferString(`
+	abc def ghi
+`))
+	var tokens []token.Token
+	for {
+		tk, err := l.NextToken()
+		if err != nil {
+			t.Error(err)
+		}
+		tokens = append(tokens, tk)
+		if tk.Type() == token.EndOfFile {
+			break
+		}
+	}
+	for _, tk := range tokens {
+		if tk.Type() == token.EndOfFile{
+			break
+		}
+		if tk.Type() != token.Identifier{
+			t.Fail()
+		}
+		fmt.Println(tk.String())
+	}
+}
+

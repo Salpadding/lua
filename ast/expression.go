@@ -1,7 +1,9 @@
 package ast
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/Salpadding/lua/common"
 	"github.com/Salpadding/lua/token"
 	"strconv"
 )
@@ -19,7 +21,7 @@ type PrefixExpression struct {
 func (p *PrefixExpression) expression() {}
 
 func (p *PrefixExpression) String() string {
-	return fmt.Sprintf("%s ( %s )", p.Operator.String(), p.Right.String())
+	return fmt.Sprintf("(%s %s)", p.Operator.String(), p.Right.String())
 }
 
 type InfixExpression struct {
@@ -31,7 +33,7 @@ type InfixExpression struct {
 func (e *InfixExpression) expression() {}
 
 func (e *InfixExpression) String() string {
-	return fmt.Sprintf("%s %s %s", e.Left.String(), e.Operator.String(), e.Right.String())
+	return fmt.Sprintf("(%s %s %s)", e.Left.String(), e.Operator.String(), e.Right.String())
 }
 
 type Number float64
@@ -66,5 +68,5 @@ type String string
 func (s String) expression() {}
 
 func (s String) String() string {
-	return string(s)
+	return common.Escape(bytes.NewBufferString(string(s)))
 }

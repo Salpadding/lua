@@ -9,6 +9,24 @@ import (
 	"strconv"
 )
 
+/*
+exp   ::= exp12
+exp12 ::= exp11 {or exp11}
+exp11 ::= exp10 {and exp10}
+exp10 ::= exp9 {(‘<’ | ‘>’ | ‘<=’ | ‘>=’ | ‘~=’ | ‘==’) exp9}
+exp9  ::= exp8 {‘|’ exp8}
+exp8  ::= exp7 {‘~’ exp7}
+exp7  ::= exp6 {‘&’ exp6}
+exp6  ::= exp5 {(‘<<’ | ‘>>’) exp5}
+exp5  ::= exp4 {‘..’ exp4}
+exp4  ::= exp3 {(‘+’ | ‘-’) exp3}
+exp3  ::= exp2 {(‘*’ | ‘/’ | ‘//’ | ‘%’) exp2}
+exp2  ::= {(‘not’ | ‘#’ | ‘-’ | ‘~’)} exp1
+exp1  ::= exp0 {‘^’ exp2}
+exp0  ::= nil | false | true | Numeral | LiteralString
+		| ‘...’ | functiondef | prefixexp | tableconstructor
+*/
+
 type Parser struct {
 	*lex.Lexer
 	current token.Token
@@ -46,6 +64,110 @@ func (p *Parser) parseExp12() (ast.Expression, error) {
 	return nil, nil
 }
 
+func(p *Parser) parseExp6() (ast.Expression, error){
+	left, err := p.parseExp5()
+	if err != nil{
+		return nil, err
+	}
+	for{
+		op := p.current
+		switch op.Type() {
+		case token.LeftShift, token.RightShift:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp5()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func(p *Parser) parseExp5() (ast.Expression, error){
+	left, err := p.parseExp4()
+	if err != nil {
+		return nil, err
+	}
+	op := p.current
+	if op.Type() != token.Concat {
+		return left, nil
+	}
+	if _, err = p.nextToken(); err != nil {
+		return nil, err
+	}
+	right, err := p.parseExp5()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.InfixExpression{
+		Operator: op.(*token.Operator),
+		Left:     left,
+		Right:    right,
+	}, nil
+}
+
+func(p *Parser) parseExp4() (ast.Expression, error){
+	left, err := p.parseExp3()
+	if err != nil{
+		return nil, err
+	}
+	for{
+		op := p.current
+		switch op.Type() {
+		case token.Minus, token.Plus:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp3()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp3() (ast.Expression, error) {
+	left, err := p.parseExp2()
+	if err != nil {
+		return nil, err
+	}
+	for{
+		op := p.current
+		switch op.Type() {
+		case token.Asterisk, token.Divide, token.IntegerDivide, token.Modular:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp2()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
 func (p *Parser) parseExp2() (ast.Expression, error) {
 	c := p.current
 	switch c.Type() {
@@ -53,7 +175,7 @@ func (p *Parser) parseExp2() (ast.Expression, error) {
 		if _, err := p.nextToken(); err != nil {
 			return nil, err
 		}
-		exp, err := p.parseExp1()
+		exp, err := p.parseExp2()
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +197,7 @@ func (p *Parser) parseExp1() (ast.Expression, error) {
 	if op.Type() != token.Power {
 		return left, nil
 	}
-	if _, err = p.nextToken(); err != nil{
+	if _, err = p.nextToken(); err != nil {
 		return nil, err
 	}
 	right, err := p.parseExp2()
