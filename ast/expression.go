@@ -6,6 +6,7 @@ import (
 	"github.com/Salpadding/lua/common"
 	"github.com/Salpadding/lua/token"
 	"strconv"
+	"strings"
 )
 
 type Expression interface {
@@ -69,4 +70,35 @@ func (s String) expression() {}
 
 func (s String) String() string {
 	return `"` + common.Escape(bytes.NewBufferString(string(s))) + `"`
+}
+
+type Identifier string
+
+func (i Identifier) expression() {}
+
+func (i Identifier) String() string {
+	return string(i)
+}
+
+type Vararg string
+
+func (v Vararg) expression() {}
+
+func (v Vararg) String() string {
+	return string(v)
+}
+
+type FunctionCall struct {
+	Function Expression
+	Args     []Expression
+}
+
+func (f *FunctionCall) expression() {}
+
+func (f *FunctionCall) String() string {
+	args := make([]string, len(f.Args))
+	for i := range args {
+		args[i] = f.Args[i].String()
+	}
+	return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), strings.Join(args, ", "))
 }

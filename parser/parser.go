@@ -22,8 +22,8 @@ exp4  ::= exp3 {('+' | '-') exp3}
 exp3  ::= exp2 {('*' | '/' | '//' | '%') exp2}
 exp2  ::= {('not' | '#' | '-' | '~')} exp2
 exp1  ::= exp0 {'^' exp1}
-exp0  ::= nil | false | true | Numeral | LiteralString
-		| '...' | functiondef | prefixexp | tableconstructor
+exp0  ::= nil | false | true | Numeral | LiteralString | ID
+		| '...' | (exp) | (ID | ( ) (' (exp,)*exp ')' | functionLiteral
 */
 
 type Parser struct {
@@ -249,7 +249,6 @@ func (p *Parser) parseExp6() (ast.Expression, error) {
 	}
 }
 
-
 func (p *Parser) parseExp5() (ast.Expression, error) {
 	left, err := p.parseExp4()
 	if err != nil {
@@ -421,22 +420,44 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 			return nil, errUnexpectedError(current)
 		}
 	default:
-		if c.Type() == token.LeftParenthesis{
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			exp, err := p.parseExpression()
-			if err != nil{
-				return nil, err
-			}
-			if p.current.Type() != token.RightParenthesis{
-				return nil, errUnexpectedError(p.current)
-			}
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			return exp, nil
+		return p.parsePrefix0()
+	}
+}
+
+/*
+	prefix2: prefix1 | prefix1 '(' ')' | prefix1 '(' (exp ',')* exp ')'
+	prefix1: prefix0 ('.' id)* | prefix0 ('[' prefix1 ']')*;
+	prefix0: id | '(' exp ')';
+ */
+func(p *Parser) parsePrefix1() (ast.Expression, error){
+	return nil, nil
+}
+
+
+func (p *Parser) parsePrefix0() (ast.Expression, error) {
+	current := p.current
+	switch p.current.Type() {
+	case token.LeftParenthesis:
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
 		}
-		return nil, errUnexpectedError(current)
+		exp, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		if p.current.Type() != token.RightParenthesis {
+			return nil, errUnexpectedError(p.current)
+		}
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		return exp, nil
+	case token.Identifier:
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		return ast.Identifier(current.String()), nil
+	default:
+		return nil, errUnexpectedError(p.current)
 	}
 }
