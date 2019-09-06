@@ -90,6 +90,10 @@ func (l *NumberLiteral) Type() Type {
 	return Number
 }
 
+func (l *NumberLiteral) Literal() string {
+	return l.literal
+}
+
 func (l *NumberLiteral) String() string {
 	return l.literal
 }
@@ -127,6 +131,10 @@ func (l *StringLiteral) Type() Type {
 
 func (l *StringLiteral) String() string {
 	return `"` + common.Escape(bytes.NewBufferString(l.literal)) + `"`
+}
+
+func (l *StringLiteral) Literal() string {
+	return l.literal
 }
 
 func (l *StringLiteral) Line() int {
