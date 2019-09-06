@@ -9,21 +9,37 @@ import (
 )
 
 /*
-exp   ::= exp12
-exp12 ::= exp11 {or exp11}
-exp11 ::= exp10 {and exp10}
-exp10 ::= exp9 {('<' | '>' | '<=' | '>=' | '~=' | '==') exp9}
-exp9  ::= exp8 {'|' exp8}
-exp8  ::= exp7 {'~' exp7}
-exp7  ::= exp6 {'&' exp6}
-exp6  ::= exp5 {('<<' | '>>') exp5}
-exp5  ::= exp4 {'..' exp5}
-exp4  ::= exp3 {('+' | '-') exp3}
-exp3  ::= exp2 {('*' | '/' | '//' | '%') exp2}
-exp2  ::= {('not' | '#' | '-' | '~')} exp2
-exp1  ::= exp0 {'^' exp1}
-exp0  ::= nil | false | true | Numeral | LiteralString | ID
-		| '...' | (exp) | (ID | ( ) (' (exp,)*exp ')' | functionLiteral
+exp: exp12;
+
+exp12: exp11 ('or' exp11)*;
+
+exp11: exp10 ('and' exp10)*;
+
+exp10: exp9 (('<' | '>' | '<=' | '>=' | '~=' | '==') exp9)*;
+
+exp9: exp8 ('|' exp8);
+
+exp8: exp7 ('~' exp7)*;
+
+exp7: exp6 ('&' exp6)*;
+
+exp6: exp5 (('<<' | '>>') exp5)*;
+
+exp5: exp4 ('..' exp5)*;
+
+exp4: exp3 (('+' | '-') exp3)*;
+
+exp3: exp2 (( '*' | '/' | '//' | '%') exp2)*;
+
+exp2: ('not' | '#' | '-' | '~' )+ exp2 | exp1;
+
+exp1: prefix ('^' exp1)*;
+
+prefix: prefix2;
+
+prefix2 : prefix1 ( '('   ')' )* |  prefix1 ( '(' (ID ',')*ID ')' )*;
+prefix1: prefix0 ( '.' ID)* | prefix0 ('[' exp ']')*;
+prefix0: 'nil' | 'false' | 'true' | STRING | NUMBER | '...' | ID | '(' exp ')';
 */
 
 type Parser struct {
@@ -430,11 +446,6 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 	}
 }
 
-/*
-	prefix2: prefix1 | prefix1 ('(' ')')+ | prefix1 ('(' (exp ',')* exp ')')+
-	prefix1: prefix0 ('.' id)* | prefix0 ('[' prefix1 ']')*;
-	prefix0: id | '(' exp ')' | exp;
-*/
 func (p *Parser) parsePrefix2() (ast.Expression, error) {
 	left, err := p.parsePrefix1()
 	if err != nil {
@@ -509,7 +520,7 @@ func (p *Parser) parsePrefix1() (ast.Expression, error) {
 			if _, err = p.nextToken(); err != nil {
 				return nil, err
 			}
-			idx, err := p.parsePrefix1()
+			idx, err := p.parseExp12()
 			if err != nil {
 				return nil, err
 			}
@@ -553,6 +564,6 @@ func (p *Parser) parsePrefix0() (ast.Expression, error) {
 		}
 		return ast.Identifier(current.String()), nil
 	default:
-		return p.parseExp12()
+		return nil, errUnexpectedError(p.current)
 	}
 }

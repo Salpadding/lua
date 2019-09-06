@@ -292,7 +292,6 @@ func TestParseGrouped(t *testing.T){
 func TestParseIndex(t *testing.T){
 	p, err := New(bytes.NewBufferString(`
 	identifier["abc"]
-	identifier.id
 `))
 	if err != nil{
 		t.Error(err)
@@ -312,9 +311,10 @@ func TestParseIndex(t *testing.T){
 
 func TestParseFunctionCall(t *testing.T){
 	p, err := New(bytes.NewBufferString(`
-	identifier["abc"]("a", "b", "c")
-	identifier.id
+	identifier["abc"]("a", "b", "c", 1000 ^ 2)
+	identifier.id()
 	fn()()
+	call(1, 2, 3, 100, ...)
 `))
 	if err != nil{
 		t.Error(err)

@@ -47,11 +47,11 @@ exp2: ('not' | '#' | '-' | '~' )+ exp2 | exp1;
 
 exp1: exp0 ('^' exp1)*;
 
-exp0: 'nil' | 'false' | 'true' | STRING | NUMBER | '...' | prefix2;
+exp0: prefix2;
 
 prefix2 : prefix1 ( '('   ')' )* |  prefix1 ( '(' (ID ',')*ID ')' )*;
-prefix1: prefix0 ( '.' ID)* | prefix0 ('[' prefix0 ']')*;
-prefix0: ID | '(' exp ')' ;
+prefix1: prefix0 ( '.' ID)* | prefix0 ('[' exp ']')*;
+prefix0: 'nil' | 'false' | 'true' | STRING | NUMBER | '...' | ID | '(' exp ')';
 
 
 STRING: '"'.*?'"';
