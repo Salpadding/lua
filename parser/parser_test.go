@@ -148,4 +148,123 @@ func TestParse6(t *testing.T){
 	}
 }
 
+func TestParse7(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	12 & 13 + 14
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp7()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
 
+func TestParse8(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	16 ~ ~ 12 & 13 + 14
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp8()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse9(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	true & false | 1 & 3
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp9()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+
+func TestParse10(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1 < 3 + 2 2 <= 4 + 9 1 == 1 2 ~= 3  2 > 9 * 99
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp10()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse11(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1 < 3 and 1 <= 1000 and false
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp11()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParse12(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	1 < 3 and 1 <= 1000 and false or true and false
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExp12()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}

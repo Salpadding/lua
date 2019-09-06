@@ -57,19 +57,177 @@ func New(reader io.RuneReader) (*Parser, error) {
 }
 
 func (p *Parser) parseExpression() (ast.Expression, error) {
-	return nil, nil
+	return p.parseExp12()
 }
 
 func (p *Parser) parseExp12() (ast.Expression, error) {
-	return nil, nil
-}
-
-func(p *Parser) parseExp6() (ast.Expression, error){
-	left, err := p.parseExp5()
-	if err != nil{
+	left, err := p.parseExp11()
+	if err != nil {
 		return nil, err
 	}
-	for{
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.LogicalOr:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp11()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}}
+
+func (p *Parser) parseExp11() (ast.Expression, error) {
+	left, err := p.parseExp10()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.LogicalAnd:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp10()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp10() (ast.Expression, error) {
+	left, err := p.parseExp9()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.LessThan, token.LessThanOrEqual, token.Equal,
+			token.GreaterThan, token.GreaterThanOrEqual, token.NotEqual:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp9()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp9() (ast.Expression, error) {
+	left, err := p.parseExp8()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.BitwiseOr:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp8()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp8() (ast.Expression, error) {
+	left, err := p.parseExp7()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.Wave:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp7()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp7() (ast.Expression, error) {
+	left, err := p.parseExp6()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		op := p.current
+		switch op.Type() {
+		case token.BitwiseAnd:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			right, err := p.parseExp6()
+			if err != nil {
+				return nil, err
+			}
+			left = &ast.InfixExpression{
+				Operator: op.(*token.Operator),
+				Left:     left,
+				Right:    right,
+			}
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseExp6() (ast.Expression, error) {
+	left, err := p.parseExp5()
+	if err != nil {
+		return nil, err
+	}
+	for {
 		op := p.current
 		switch op.Type() {
 		case token.LeftShift, token.RightShift:
@@ -91,7 +249,7 @@ func(p *Parser) parseExp6() (ast.Expression, error){
 	}
 }
 
-func(p *Parser) parseExp5() (ast.Expression, error){
+func (p *Parser) parseExp5() (ast.Expression, error) {
 	left, err := p.parseExp4()
 	if err != nil {
 		return nil, err
@@ -114,12 +272,12 @@ func(p *Parser) parseExp5() (ast.Expression, error){
 	}, nil
 }
 
-func(p *Parser) parseExp4() (ast.Expression, error){
+func (p *Parser) parseExp4() (ast.Expression, error) {
 	left, err := p.parseExp3()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	for{
+	for {
 		op := p.current
 		switch op.Type() {
 		case token.Minus, token.Plus:
@@ -146,7 +304,7 @@ func (p *Parser) parseExp3() (ast.Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	for{
+	for {
 		op := p.current
 		switch op.Type() {
 		case token.Asterisk, token.Divide, token.IntegerDivide, token.Modular:

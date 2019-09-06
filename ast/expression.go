@@ -68,5 +68,5 @@ type String string
 func (s String) expression() {}
 
 func (s String) String() string {
-	return common.Escape(bytes.NewBufferString(string(s)))
+	return `"` + common.Escape(bytes.NewBufferString(string(s))) + `"`
 }
