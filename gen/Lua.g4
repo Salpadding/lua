@@ -43,7 +43,7 @@ exp4: exp3 (('+' | '-') exp3)*;
 
 exp3: exp2 (( '*' | '/' | '//' | '%') exp2)*;
 
-exp2: exp1 (('not' | '#' | '-' | '~' )+ exp2);
+exp2: ('not' | '#' | '-' | '~' )+ exp2 | exp1;
 
 exp1: exp0 ('^' exp1)*;
 
