@@ -268,3 +268,23 @@ func TestParse12(t *testing.T){
 		fmt.Println(exp.String())
 	}
 }
+
+func TestParseGrouped(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	( 1 +  - 2 ^ 16 ) * 3
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExpression()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}

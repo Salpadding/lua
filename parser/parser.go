@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"github.com/Salpadding/lua/ast"
 	"github.com/Salpadding/lua/lex"
 	"github.com/Salpadding/lua/token"
@@ -13,18 +12,18 @@ import (
 exp   ::= exp12
 exp12 ::= exp11 {or exp11}
 exp11 ::= exp10 {and exp10}
-exp10 ::= exp9 {(‘<’ | ‘>’ | ‘<=’ | ‘>=’ | ‘~=’ | ‘==’) exp9}
-exp9  ::= exp8 {‘|’ exp8}
-exp8  ::= exp7 {‘~’ exp7}
-exp7  ::= exp6 {‘&’ exp6}
-exp6  ::= exp5 {(‘<<’ | ‘>>’) exp5}
-exp5  ::= exp4 {‘..’ exp5}
-exp4  ::= exp3 {(‘+’ | ‘-’) exp3}
-exp3  ::= exp2 {(‘*’ | ‘/’ | ‘//’ | ‘%’) exp2}
-exp2  ::= {(‘not’ | ‘#’ | ‘-’ | ‘~’)} exp2
-exp1  ::= exp0 {‘^’ exp2}
+exp10 ::= exp9 {('<' | '>' | '<=' | '>=' | '~=' | '==') exp9}
+exp9  ::= exp8 {'|' exp8}
+exp8  ::= exp7 {'~' exp7}
+exp7  ::= exp6 {'&' exp6}
+exp6  ::= exp5 {('<<' | '>>') exp5}
+exp5  ::= exp4 {'..' exp5}
+exp4  ::= exp3 {('+' | '-') exp3}
+exp3  ::= exp2 {('*' | '/' | '//' | '%') exp2}
+exp2  ::= {('not' | '#' | '-' | '~')} exp2
+exp1  ::= exp0 {'^' exp1}
 exp0  ::= nil | false | true | Numeral | LiteralString
-		| ‘...’ | functiondef | prefixexp | tableconstructor
+		| '...' | functiondef | prefixexp | tableconstructor
 */
 
 type Parser struct {
@@ -362,7 +361,7 @@ func (p *Parser) parseExp1() (ast.Expression, error) {
 		if _, err = p.nextToken(); err != nil {
 			return nil, err
 		}
-		right, err := p.parseExp2()
+		right, err := p.parseExp1()
 		if err != nil {
 			return nil, err
 		}
@@ -419,9 +418,25 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 			}
 			return &ast.Nil{}, nil
 		default:
-			return nil, errors.New("unexpected key word found in expression: " + c.String())
+			return nil, errUnexpectedError(current)
 		}
 	default:
-		return nil, errors.New("unexpected token found " + c.String())
+		if c.Type() == token.LeftParenthesis{
+			if _, err := p.nextToken(); err != nil {
+				return nil, err
+			}
+			exp, err := p.parseExpression()
+			if err != nil{
+				return nil, err
+			}
+			if p.current.Type() != token.RightParenthesis{
+				return nil, errUnexpectedError(p.current)
+			}
+			if _, err := p.nextToken(); err != nil {
+				return nil, err
+			}
+			return exp, nil
+		}
+		return nil, errUnexpectedError(current)
 	}
 }
