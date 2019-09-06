@@ -102,3 +102,14 @@ func (f *FunctionCall) String() string {
 	}
 	return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), strings.Join(args, ", "))
 }
+
+type Index struct {
+	Left Expression
+	Idx  Expression
+}
+
+func (i *Index) expression() {}
+
+func (i *Index) String() string {
+	return fmt.Sprintf("(%s[ %s ])", i.Left.String(), i.Idx.String())
+}

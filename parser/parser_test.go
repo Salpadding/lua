@@ -288,3 +288,46 @@ func TestParseGrouped(t *testing.T){
 		fmt.Println(exp.String())
 	}
 }
+
+func TestParseIndex(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	identifier["abc"]
+	identifier.id
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExpression()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParseFunctionCall(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	identifier["abc"]("a", "b", "c")
+	identifier.id
+	fn()()
+`))
+	if err != nil{
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile{
+		exp, err := p.parseExpression()
+		if err != nil{
+			t.Error(err)
+		}
+		_, ok := exp.(ast.Expression)
+		if !ok{
+			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}

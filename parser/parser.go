@@ -420,17 +420,107 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 			return nil, errUnexpectedError(current)
 		}
 	default:
-		return p.parsePrefix0()
+		return p.parsePrefix2()
 	}
 }
 
 /*
-	prefix2: prefix1 | prefix1 '(' ')' | prefix1 '(' (exp ',')* exp ')'
+	prefix2: prefix1 | prefix1 ('(' ')')+ | prefix1 ('(' (exp ',')* exp ')')+
 	prefix1: prefix0 ('.' id)* | prefix0 ('[' prefix1 ']')*;
-	prefix0: id | '(' exp ')';
+	prefix0: id | '(' exp ')' | exp;
  */
+func(p *Parser) parsePrefix2() (ast.Expression, error){
+	left, err := p.parsePrefix1()
+	if err != nil{
+		return nil, err
+	}
+	for{
+		if p.current.Type() != token.LeftParenthesis{
+			return left, nil
+		}
+		if _, err = p.nextToken(); err != nil{
+			return nil, err
+		}
+		if p.current.Type() == token.RightParenthesis{
+			left = &ast.FunctionCall{
+				Function: left,
+				Args:     nil,
+			}
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+			continue
+		}
+		var args []ast.Expression
+		for{
+			exp, err := p.parseExp12()
+			if err != nil{
+				return nil, err
+			}
+			args = append(args, exp)
+			if p.current.Type() != token.Comma{
+				break
+			}
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+		}
+		if p.current.Type() != token.RightParenthesis{
+			return nil, errUnexpectedError(p.current)
+		}
+		left = &ast.FunctionCall{
+			Function: left,
+			Args:     args,
+		}
+		if _, err = p.nextToken(); err != nil{
+			return nil, err
+		}
+	}
+}
+
 func(p *Parser) parsePrefix1() (ast.Expression, error){
-	return nil, nil
+	left, err := p.parsePrefix0()
+	if err != nil{
+		return nil, err
+	}
+	for{
+		switch p.current.Type() {
+		case token.Dot:
+			if p.next.Type() != token.Identifier{
+				return nil, errUnexpectedError(p.next)
+			}
+			left = &ast.Index{
+				Left: left,
+				Idx:  ast.Identifier(p.next.String()),
+			}
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+		case token.LeftBracket:
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+			idx, err := p.parsePrefix1()
+			if err != nil{
+				return nil, err
+			}
+			left = &ast.Index{
+				Left: left,
+				Idx:  idx,
+			}
+			if p.current.Type() != token.RightBracket{
+				return nil, errUnexpectedError(p.current)
+			}
+			if _, err = p.nextToken(); err != nil{
+				return nil, err
+			}
+		default:
+			return left, nil
+		}
+	}
 }
 
 
@@ -458,6 +548,6 @@ func (p *Parser) parsePrefix0() (ast.Expression, error) {
 		}
 		return ast.Identifier(current.String()), nil
 	default:
-		return nil, errUnexpectedError(p.current)
+		return p.parseExp12()
 	}
 }

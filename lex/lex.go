@@ -238,7 +238,7 @@ func (l *Lexer) isNumber(r rune) bool {
 func (l *Lexer) readIDOrKeyword() (token.Token, error) {
 	line, column := l.line, l.column
 	var buf bytes.Buffer
-	for !l.current.isEOF() && !isWhiteSpace(l.current.rune()) {
+	for !l.current.isEOF() && l.isID(l.current.rune()) {
 		buf.WriteRune(l.current.rune())
 		l.ReadChar()
 	}
@@ -258,6 +258,14 @@ func (l *Lexer) readIDOrKeyword() (token.Token, error) {
 
 func (l *Lexer) isHex(r rune) bool {
 	return l.isNumber(r) || ('a' <= r && r <= 'f') || ('A' <= r && r <= 'F')
+}
+
+func(l *Lexer) isLetter(r rune) bool{
+	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z'
+}
+
+func(l *Lexer) isID(r rune) bool{
+	return r == '_' || l.isLetter(r)
 }
 
 func (l *Lexer) readLiteralOrKeyword() (token.Token, error) {

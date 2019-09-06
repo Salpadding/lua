@@ -18,6 +18,7 @@ exp0  ::= nil | false | true | Numeral | LiteralString
 
 grammar Lua;
 
+
 lua: exp;
 
 exp: exp12;
@@ -42,19 +43,21 @@ exp4: exp3 (('+' | '-') exp3)*;
 
 exp3: exp2 (( '*' | '/' | '//' | '%') exp2)*;
 
-exp2: ('not' | '#' | '-' | '~' )+ exp2;
+exp2: exp1 (('not' | '#' | '-' | '~' )+ exp2);
 
 exp1: exp0 ('^' exp1)*;
 
-exp0: 'nil' | 'false' | 'true' | STRING | NUMBER | '(' exp12 ')' | ID '(' (exp12',')* ')';
+exp0: 'nil' | 'false' | 'true' | STRING | NUMBER | '...' | prefix2;
 
-prefix1 : prefix0 ('.' STRING)* | prefix0 ('[' prefix1 ']')*;
-prefix0 : STRING | '(' exp ')';
+prefix2 : prefix1 ( '('   ')' )* |  prefix1 ( '(' (ID ',')*ID ')' )*;
+prefix1: prefix0 ( '.' ID)* | prefix0 ('[' prefix0 ']')*;
+prefix0: ID | '(' exp ')' ;
 
-IDlist: '(' (ID ',')*ID ')';
 
-STRING: '"' .*? '"';
+STRING: '"'.*?'"';
 
-ID: STRING;
+ID: ([a-zA-Z] | '_') ([a-zA-Z0-9] | '_' )*;
 
-NUMBER: '-'?[0-9]+('.' [0-9]+)?;
+NUMBER: [0-9]+('.' [0-9]+)?('e'[0-9]+)?;
+
+WS: [\t\n\r ]+ -> skip;
