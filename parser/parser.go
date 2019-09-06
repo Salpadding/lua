@@ -33,12 +33,9 @@ exp3: exp2 (( '*' | '/' | '//' | '%') exp2)*;
 
 exp2: ('not' | '#' | '-' | '~' )+ exp2 | exp1;
 
-exp1: prefix ('^' exp1)*;
+exp1: prefix1 ('^' exp1)*;
 
-prefix: prefix2;
-
-prefix2 : prefix1 ( '('   ')' )* |  prefix1 ( '(' (ID ',')*ID ')' )*;
-prefix1: prefix0 ( '.' ID)* | prefix0 ('[' exp ']')*;
+prefix1: prefix0 ( '.' ID)* | prefix0 ('[' exp ']')* | prefix0 ( '(' ')' ) * | prefix0  ( '(' (exp ',')*exp ')' )*;
 prefix0: 'nil' | 'false' | 'true' | STRING | NUMBER | '...' | ID | '(' exp ')';
 */
 
@@ -363,7 +360,7 @@ func (p *Parser) parseExp2() (ast.Expression, error) {
 }
 
 func (p *Parser) parseExp1() (ast.Expression, error) {
-	left, err := p.parseExp0()
+	left, err := p.parsePrefix1()
 	if err != nil {
 		return nil, err
 	}
@@ -384,113 +381,6 @@ func (p *Parser) parseExp1() (ast.Expression, error) {
 			Operator: op.(*token.Operator),
 			Left:     left,
 			Right:    right,
-		}
-	}
-}
-
-func (p *Parser) parseExp0() (ast.Expression, error) {
-	current := p.current
-	switch c := current.(type) {
-	case *token.NumberLiteral:
-		if c.Base() == 10 {
-			f, err := strconv.ParseFloat(c.Literal(), 64)
-			if err != nil {
-				return nil, err
-			}
-			if _, err = p.nextToken(); err != nil {
-				return nil, err
-			}
-			return ast.Number(f), nil
-		}
-		n, err := strconv.ParseInt(c.Literal(), 16, 64)
-		if err != nil {
-			return nil, err
-		}
-		if _, err = p.nextToken(); err != nil {
-			return nil, err
-		}
-		return ast.Number(n), nil
-	case *token.StringLiteral:
-		if _, err := p.nextToken(); err != nil {
-			return nil, err
-		}
-		return ast.String(c.Literal()), nil
-	case *token.Keyword:
-		switch c.Type() {
-		case token.True:
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			return ast.Boolean(true), nil
-		case token.False:
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			return ast.Boolean(false), nil
-		case token.Nil:
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			return &ast.Nil{}, nil
-		default:
-			return nil, errUnexpectedError(current)
-		}
-	default:
-		if current.Type() == token.Varing {
-			if _, err := p.nextToken(); err != nil {
-				return nil, err
-			}
-			return ast.Vararg(current.String()), nil
-		}
-		return p.parsePrefix2()
-	}
-}
-
-func (p *Parser) parsePrefix2() (ast.Expression, error) {
-	left, err := p.parsePrefix1()
-	if err != nil {
-		return nil, err
-	}
-	for {
-		if p.current.Type() != token.LeftParenthesis {
-			return left, nil
-		}
-		if _, err = p.nextToken(); err != nil {
-			return nil, err
-		}
-		if p.current.Type() == token.RightParenthesis {
-			left = &ast.FunctionCall{
-				Function: left,
-				Args:     nil,
-			}
-			if _, err = p.nextToken(); err != nil {
-				return nil, err
-			}
-			continue
-		}
-		var args []ast.Expression
-		for {
-			exp, err := p.parseExp12()
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, exp)
-			if p.current.Type() != token.Comma {
-				break
-			}
-			if _, err = p.nextToken(); err != nil {
-				return nil, err
-			}
-		}
-		if p.current.Type() != token.RightParenthesis {
-			return nil, errUnexpectedError(p.current)
-		}
-		left = &ast.FunctionCall{
-			Function: left,
-			Args:     args,
-		}
-		if _, err = p.nextToken(); err != nil {
-			return nil, err
 		}
 	}
 }
@@ -534,6 +424,44 @@ func (p *Parser) parsePrefix1() (ast.Expression, error) {
 			if _, err = p.nextToken(); err != nil {
 				return nil, err
 			}
+		case token.LeftParenthesis:
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			if p.current.Type() == token.RightParenthesis {
+				left = &ast.FunctionCall{
+					Function: left,
+					Args:     nil,
+				}
+				if _, err = p.nextToken(); err != nil {
+					return nil, err
+				}
+				continue
+			}
+			var args []ast.Expression
+			for {
+				exp, err := p.parseExp12()
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, exp)
+				if p.current.Type() != token.Comma {
+					break
+				}
+				if _, err = p.nextToken(); err != nil {
+					return nil, err
+				}
+			}
+			if p.current.Type() != token.RightParenthesis {
+				return nil, errUnexpectedError(p.current)
+			}
+			left = &ast.FunctionCall{
+				Function: left,
+				Args:     args,
+			}
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
 		default:
 			return left, nil
 		}
@@ -563,7 +491,58 @@ func (p *Parser) parsePrefix0() (ast.Expression, error) {
 			return nil, err
 		}
 		return ast.Identifier(current.String()), nil
+	case token.Varing:
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		return ast.Vararg(current.String()), nil
 	default:
-		return nil, errUnexpectedError(p.current)
+		switch c := current.(type) {
+		case *token.NumberLiteral:
+			if c.Base() == 10 {
+				f, err := strconv.ParseFloat(c.Literal(), 64)
+				if err != nil {
+					return nil, err
+				}
+				if _, err = p.nextToken(); err != nil {
+					return nil, err
+				}
+				return ast.Number(f), nil
+			}
+			n, err := strconv.ParseInt(c.Literal(), 16, 64)
+			if err != nil {
+				return nil, err
+			}
+			if _, err = p.nextToken(); err != nil {
+				return nil, err
+			}
+			return ast.Number(n), nil
+		case *token.StringLiteral:
+			if _, err := p.nextToken(); err != nil {
+				return nil, err
+			}
+			return ast.String(c.Literal()), nil
+		case *token.Keyword:
+			switch c.Type() {
+			case token.True:
+				if _, err := p.nextToken(); err != nil {
+					return nil, err
+				}
+				return ast.Boolean(true), nil
+			case token.False:
+				if _, err := p.nextToken(); err != nil {
+					return nil, err
+				}
+				return ast.Boolean(false), nil
+			case token.Nil:
+				if _, err := p.nextToken(); err != nil {
+					return nil, err
+				}
+				return &ast.Nil{}, nil
+			}
+		default:
+			return nil, errUnexpectedError(p.current)
+		}
 	}
+	return nil, errUnexpectedError(p.current)
 }
