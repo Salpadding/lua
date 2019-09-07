@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
-
-	"github.com/Salpadding/lua/token"
 )
 
 func TestParseAssign(t *testing.T){
@@ -46,12 +44,33 @@ func TestParseSimples(t *testing.T){
 	if err != nil {
 		t.Error(err)
 	}
-	for p.current.Type() != token.EndOfFile{
-		s, err := p.parseStatement()
-		if err != nil{
-			t.Error(err)
-		}
-		fmt.Println(s.String())
+	stmts, err := p.parseStatements()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, st := range stmts{
+		fmt.Println(st.String())
+	}
+}
+
+func TestParseBlock(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	a = 1 + 2
+	b = 1 + a
+	return a + b, 1 ,2 ;
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseBlock()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, st := range blk.Statements{
+		fmt.Println(st.String())
+	}
+	if blk.Return != nil{
+		fmt.Println(blk.Return.String())
 	}
 }
 

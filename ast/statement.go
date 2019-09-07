@@ -10,14 +10,20 @@ type Statement interface {
 	String() string
 }
 
-type Block []Statement
+type Block struct {
+	Statements []Statement
+	Return     *Return
+}
 
 //func (b Block) statement() {}
 
 func (b Block) String() string {
-	res := make([]string, len(b))
+	res := make([]string, len(b.Statements))
 	for i := range res {
-		res[i] = b[i].String()
+		res[i] = b.Statements[i].String()
+	}
+	if b.Return != nil {
+		res = append(res, b.Return.String())
 	}
 	return strings.Join(res, "\n")
 }
@@ -116,4 +122,14 @@ func (a *Assign) String() string {
 		values[i] = a.Values[i].String()
 	}
 	return fmt.Sprintf("%s = %s", strings.Join(vars, ", "), strings.Join(values, ", "))
+}
+
+type Function struct {
+	Name      string
+	Body      Block
+	Arguments []Expression
+}
+
+type LocalFunction struct {
+	*Function
 }

@@ -430,19 +430,9 @@ func (p *Parser) parsePrefix1() (ast.Expression, error) {
 				}
 				continue
 			}
-			var args []ast.Expression
-			for {
-				exp, err := p.parseExp12()
-				if err != nil {
-					return nil, err
-				}
-				args = append(args, exp)
-				if p.current.Type() != token.Comma {
-					break
-				}
-				if _, err = p.nextToken(); err != nil {
-					return nil, err
-				}
+			args, err := p.parseExpressionList()
+			if err != nil{
+				return nil, err
 			}
 			if p.current.Type() != token.RightParenthesis {
 				return nil, errUnexpectedError(p.current)

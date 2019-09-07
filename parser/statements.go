@@ -5,10 +5,28 @@ import (
 	"github.com/Salpadding/lua/token"
 )
 
-// 解析赋值语句
-func (p *Parser) parseAssign() (ast.Statement, error) {
-	var vars []ast.Expression
+// 解析表达式列表
+func (p *Parser) parseExpressionList() ([]ast.Expression, error) {
 	var values []ast.Expression
+	for {
+		val, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		if p.current.Type() != token.Comma {
+			break
+		}
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		values = append(values, val)
+	}
+	return values, nil
+}
+
+// 解析赋值语句
+func (p *Parser) parseAssign() (*ast.Assign, error) {
+	var vars []ast.Expression
 	for {
 		variable, err := p.parsePrefix1()
 		if err != nil {
@@ -33,18 +51,9 @@ func (p *Parser) parseAssign() (ast.Statement, error) {
 	if _, err := p.nextToken(); err != nil {
 		return nil, err
 	}
-	for {
-		val, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		if p.current.Type() != token.Comma {
-			break
-		}
-		if _, err := p.nextToken(); err != nil {
-			return nil, err
-		}
-		values = append(values, val)
+	values, err := p.parseExpressionList()
+	if err != nil {
+		return nil, err
 	}
 	return &ast.Assign{
 		Vars:   vars,
@@ -57,13 +66,10 @@ func (p *Parser) parseLocalAssign() (ast.Statement, error) {
 	if _, err := p.nextToken(); err != nil {
 		return nil, err
 	}
-	st, err := p.parseAssign()
+	var ok bool
+	as, err := p.parseAssign()
 	if err != nil {
 		return nil, err
-	}
-	as, ok := st.(*ast.Assign)
-	if !ok {
-		return nil, errUnexpectedError(p.current)
 	}
 	ids := make([]ast.Identifier, len(as.Vars))
 	for i := range ids {
@@ -76,4 +82,32 @@ func (p *Parser) parseLocalAssign() (ast.Statement, error) {
 		Identifiers: ids,
 		Values:      as.Values,
 	}, nil
+}
+
+func (p *Parser) parseReturn() (*ast.Return, error) {
+	// skip return
+	if _, err := p.nextToken(); err != nil {
+		return nil, err
+	}
+	switch p.current.Type() {
+	case token.EndOfFile, token.End, token.Else, token.ElseIf, token.Until:
+		return &ast.Return{}, nil
+	case token.Semicolon:
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		return &ast.Return{}, nil
+	default:
+		exps, err := p.parseExpressionList()
+		if err != nil {
+			return nil, err
+		}
+		if p.current.Type() != token.Semicolon {
+			return &ast.Return{Values: exps}, nil
+		}
+		if _, err := p.nextToken(); err != nil {
+			return nil, err
+		}
+		return &ast.Return{Values: exps}, nil
+	}
 }

@@ -67,8 +67,40 @@ func New(reader io.RuneReader) (*Parser, error) {
 	return p, nil
 }
 
-func (p *Parser) Parse() (ast.Block, error) {
+func (p *Parser) Parse() (*ast.Block, error) {
 	return nil, nil
+}
+
+func (p *Parser) parseStatements() ([]ast.Statement, error) {
+	var res []ast.Statement
+	for !p.isReturnOrKeyword(p.current) {
+		s, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, s)
+	}
+	return res, nil
+}
+
+func (p *Parser) parseBlock() (*ast.Block, error) {
+	statements, err := p.parseStatements()
+	if err != nil {
+		return nil, err
+	}
+	if p.current.Type() != token.Return {
+		return &ast.Block{
+			Statements: statements,
+		}, nil
+	}
+	re, err := p.parseReturn()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.Block{
+		Statements: statements,
+		Return:     re,
+	}, nil
 }
 
 func (p *Parser) parseStatement() (ast.Statement, error) {
@@ -113,8 +145,9 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 			return nil, err
 		}
 		return ast.Goto(id), nil
+	default:
+		return p.parseAssign()
 	}
-	return nil, nil
 }
 
 func (p *Parser) parseExpression() (ast.Expression, error) {
