@@ -35,7 +35,7 @@ const (
 	Len                // #
 
 	// Delimiters
-	Varing           // ...
+	Varying          // ...
 	Label            // ::
 	Comma            // ,
 	Semicolon        // ;

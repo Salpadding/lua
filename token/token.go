@@ -37,7 +37,7 @@ var Operators = map[string]Type{
 }
 
 var Delimiters = map[string]Type{
-	"...": Varing,
+	"...": Varying,
 	"::":  Label,
 	",":   Comma,
 	";":   Semicolon,

@@ -17,7 +17,7 @@ func TestParse0(t *testing.T) {
 		t.Error(err)
 	}
 	for p.current.Type() != token.EndOfFile {
-		exp, err := p.parsePrefix1()
+		exp, err := p.parseExp1()
 		if err != nil {
 			t.Error(err)
 		}
@@ -271,7 +271,7 @@ func TestParse12(t *testing.T) {
 
 func TestParseGrouped(t *testing.T) {
 	p, err := New(bytes.NewBufferString(`
-	( 1 +  - 2 ^ 16 ) * 3
+	( 1 +  - 2 ^ 16 - 13 * 2 / 8) * 3
 `))
 	if err != nil {
 		t.Error(err)
@@ -302,7 +302,7 @@ func TestParseIndex(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		_, ok := exp.(*ast.Index)
+		_, ok := exp.(*ast.TableAccess)
 		if !ok {
 			t.Fail()
 		}
@@ -312,9 +312,9 @@ func TestParseIndex(t *testing.T) {
 
 func TestParseFunctionCall(t *testing.T) {
 	p, err := New(bytes.NewBufferString(`
-	(12).add(1, 2, 3, 100, ...).name
+	(12).add(1, 2, 3, 100, ...).name()
 	call("arg", ...).isOk.assert("true")
-	"adbbss".len()
+	abscd.len()
 `))
 	if err != nil {
 		t.Error(err)

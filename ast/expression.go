@@ -94,6 +94,8 @@ type FunctionCall struct {
 	Args     []Expression
 }
 
+func (f *FunctionCall) statement() {}
+
 func (f *FunctionCall) expression() {}
 
 func (f *FunctionCall) String() string {
@@ -104,13 +106,13 @@ func (f *FunctionCall) String() string {
 	return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), strings.Join(args, ", "))
 }
 
-type Index struct {
-	Left Expression
-	Idx  Expression
+type TableAccess struct {
+	Left  Expression
+	Index Expression
 }
 
-func (i *Index) expression() {}
+func (i *TableAccess) expression() {}
 
-func (i *Index) String() string {
-	return fmt.Sprintf("(%s[ %s ])", i.Left.String(), i.Idx.String())
+func (i *TableAccess) String() string {
+	return fmt.Sprintf("(%s[ %s ])", i.Left.String(), i.Index.String())
 }
