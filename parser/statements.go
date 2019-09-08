@@ -42,6 +42,71 @@ func (p *Parser) parseAssign() (*ast.Assign, error) {
 	}, nil
 }
 
+func (p *Parser) parseDoBlockEnd() (*ast.Block, error) {
+	// skip do
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	blk, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.assertType(p.current, token.End); err != nil {
+		return nil, err
+	}
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	return blk, nil
+}
+
+func (p *Parser) parseWhile() (*ast.While, error) {
+	// skip while
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	condition, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.assertType(p.current, token.Do); err != nil {
+		return nil, err
+	}
+	blk, err := p.parseDoBlockEnd()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.While{
+		Condition: condition,
+		Body:      blk,
+	}, nil
+}
+
+func (p *Parser) parseRepeat() (*ast.Repeat, error) {
+	// skip repeat
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	blk, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.assertType(p.current, token.Until); err != nil {
+		return nil, err
+	}
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	cond, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	return &ast.Repeat{
+		Condition: cond,
+		Body:      blk,
+	}, nil
+}
+
 func (p *Parser) parseLocalAssign() (ast.Statement, error) {
 	// skip local
 	if _, err := p.nextToken(1); err != nil {

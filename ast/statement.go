@@ -17,7 +17,7 @@ type Block struct {
 
 //func (b Block) statement() {}
 
-func (b Block) String() string {
+func (b *Block) String() string {
 	res := make([]string, len(b.Statements))
 	for i := range res {
 		res[i] = b.Statements[i].String()
@@ -77,14 +77,24 @@ func (g Goto) String() string {
 
 type While struct {
 	Condition Expression
-	Body      Block
+	Body      *Block
 }
 
 func (w *While) statement() {}
 
+func (w *While) String() string {
+	return fmt.Sprintf("while %s \ndo\n %s \nend", w.Condition.String(), w.Body.String())
+}
+
 type Repeat struct {
 	Condition Expression
-	Body      Block
+	Body      *Block
+}
+
+func(r *Repeat) statement(){}
+
+func(r *Repeat) String() string{
+	return fmt.Sprintf("repeat \n %s \nuntil\n %s", r.Body.String(), r.Condition.String())
 }
 
 type LocalAssign struct {

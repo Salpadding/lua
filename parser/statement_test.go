@@ -74,3 +74,44 @@ func TestParseBlock(t *testing.T){
 	}
 }
 
+func TestParseWhile(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	while a + 3 < 100
+	do
+		a = 1 + 2
+		b = 1 + a
+		return a + b, 1 ,2 ;
+	end
+
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseWhile()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, st := range blk.Body.Statements{
+		fmt.Println(st.String())
+	}
+}
+
+func TestParseRepeat(t *testing.T){
+	p, err := New(bytes.NewBufferString(`
+	repeat
+		a = 1 + 2
+		b = 1 + a
+		return a + b, 1 ,2 ;
+	until true
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseRepeat()
+	if err != nil {
+		t.Error(err)
+	}
+	for _, st := range blk.Body.Statements{
+		fmt.Println(st.String())
+	}
+}

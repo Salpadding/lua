@@ -21,13 +21,13 @@ func (p *Parser) parseExpressions() (ast.Expressions, error) {
 		if err != nil {
 			return nil, err
 		}
+		values = append(values, val)
 		if p.current.Type() != token.Comma {
 			break
 		}
 		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
-		values = append(values, val)
 	}
 	return values, nil
 }
