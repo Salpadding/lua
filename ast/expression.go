@@ -73,6 +73,8 @@ func (s String) String() string {
 	return `"` + common.Escape(bytes.NewBufferString(string(s))) + `"`
 }
 
+func (s String) arguments() {}
+
 type Identifier string
 
 func (i Identifier) expression() {}
@@ -91,7 +93,8 @@ func (v Vararg) String() string {
 
 type FunctionCall struct {
 	Function Expression
-	Args     []Expression
+	Args     Arguments
+	Self     Expression
 }
 
 func (f *FunctionCall) statement() {}
@@ -99,11 +102,13 @@ func (f *FunctionCall) statement() {}
 func (f *FunctionCall) expression() {}
 
 func (f *FunctionCall) String() string {
-	args := make([]string, len(f.Args))
-	for i := range args {
-		args[i] = f.Args[i].String()
+	if f.Args == nil {
+		f.Args = Expressions{}
 	}
-	return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), strings.Join(args, ", "))
+	if f.Self == nil {
+		return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), f.Args.String())
+	}
+	return fmt.Sprintf("%s:%s ( %s )", f.Self.String(), f.Function.String(), f.Args.String())
 }
 
 type TableAccess struct {
@@ -116,3 +121,22 @@ func (i *TableAccess) expression() {}
 func (i *TableAccess) String() string {
 	return fmt.Sprintf("(%s[ %s ])", i.Left.String(), i.Index.String())
 }
+
+type Keypair struct {
+	Key   Expression
+	Value Expression
+}
+
+type Table []*Keypair
+
+func (tb Table) expression() {}
+
+func (tb Table) String() string {
+	res := make([]string, len(tb))
+	for i := range res {
+		res[i] = fmt.Sprintf("%s = %s", tb[i].Key.String(), tb[i].Value.String())
+	}
+	return fmt.Sprintf("{ %s }", strings.Join(res, ", "))
+}
+
+func (tb Table) arguments() {}

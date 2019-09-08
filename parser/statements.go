@@ -5,25 +5,6 @@ import (
 	"github.com/Salpadding/lua/token"
 )
 
-// 解析表达式列表
-func (p *Parser) parseExpressionList() ([]ast.Expression, error) {
-	var values []ast.Expression
-	for {
-		val, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		if p.current.Type() != token.Comma {
-			break
-		}
-		if _, err := p.nextToken(); err != nil {
-			return nil, err
-		}
-		values = append(values, val)
-	}
-	return values, nil
-}
-
 // 解析赋值语句
 func (p *Parser) parseAssign() (*ast.Assign, error) {
 	var vars []ast.Expression
@@ -41,17 +22,17 @@ func (p *Parser) parseAssign() (*ast.Assign, error) {
 		if p.current.Type() != token.Comma {
 			break
 		}
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 	}
 	if p.current.Type() != token.Assign {
 		return nil, errUnexpectedError(p.current)
 	}
-	if _, err := p.nextToken(); err != nil {
+	if _, err := p.nextToken(1); err != nil {
 		return nil, err
 	}
-	values, err := p.parseExpressionList()
+	values, err := p.parseExpressions()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +44,7 @@ func (p *Parser) parseAssign() (*ast.Assign, error) {
 
 func (p *Parser) parseLocalAssign() (ast.Statement, error) {
 	// skip local
-	if _, err := p.nextToken(); err != nil {
+	if _, err := p.nextToken(1); err != nil {
 		return nil, err
 	}
 	var ok bool
@@ -86,26 +67,26 @@ func (p *Parser) parseLocalAssign() (ast.Statement, error) {
 
 func (p *Parser) parseReturn() (*ast.Return, error) {
 	// skip return
-	if _, err := p.nextToken(); err != nil {
+	if _, err := p.nextToken(1); err != nil {
 		return nil, err
 	}
 	switch p.current.Type() {
 	case token.EndOfFile, token.End, token.Else, token.ElseIf, token.Until:
 		return &ast.Return{}, nil
 	case token.Semicolon:
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 		return &ast.Return{}, nil
 	default:
-		exps, err := p.parseExpressionList()
+		exps, err := p.parseExpressions()
 		if err != nil {
 			return nil, err
 		}
 		if p.current.Type() != token.Semicolon {
 			return &ast.Return{Values: exps}, nil
 		}
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 		return &ast.Return{Values: exps}, nil

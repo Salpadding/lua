@@ -44,13 +44,15 @@ type Parser struct {
 	next    token.Token
 }
 
-func (p *Parser) nextToken() (token.Token, error) {
-	p.current = p.next
-	next, err := p.Lexer.NextToken()
-	if err != nil {
-		return nil, err
+func (p *Parser) nextToken(count int) (token.Token, error) {
+	for i := 0; i < count; i++{
+		p.current = p.next
+		next, err := p.Lexer.NextToken()
+		if err != nil {
+			return nil, err
+		}
+		p.next = next
 	}
-	p.next = next
 	return p.current, nil
 }
 
@@ -58,10 +60,7 @@ func New(reader io.RuneReader) (*Parser, error) {
 	p := &Parser{
 		Lexer: lex.New(reader),
 	}
-	if _, err := p.nextToken(); err != nil {
-		return nil, err
-	}
-	if _, err := p.nextToken(); err != nil {
+	if _, err := p.nextToken(2); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -106,17 +105,17 @@ func (p *Parser) parseBlock() (*ast.Block, error) {
 func (p *Parser) parseStatement() (ast.Statement, error) {
 	switch p.current.Type() {
 	case token.Break:
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 		return ast.Break("break"), nil
 	case token.Semicolon:
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 		return ast.Empty(";"), nil
 	case token.Label:
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(1); err != nil {
 			return nil, err
 		}
 		if p.current.Type() != token.Identifier {
@@ -126,10 +125,7 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 		if p.next.Type() != token.Label {
 			return nil, errUnexpectedError(p.next)
 		}
-		if _, err := p.nextToken(); err != nil {
-			return nil, err
-		}
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(2); err != nil {
 			return nil, err
 		}
 		return ast.Label(id), nil
@@ -138,10 +134,7 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 			return nil, errUnexpectedError(p.next)
 		}
 		id := p.next.String()
-		if _, err := p.nextToken(); err != nil {
-			return nil, err
-		}
-		if _, err := p.nextToken(); err != nil {
+		if _, err := p.nextToken(2); err != nil {
 			return nil, err
 		}
 		return ast.Goto(id), nil

@@ -315,6 +315,11 @@ func TestParseFunctionCall(t *testing.T) {
 	(12).add(1, 2, 3, 100, ...).name()
 	call("arg", ...).isOk.assert("true")
 	abscd.len()
+	abcxdf:name(1,2)
+	abc {"abc"}
+	call "name"
+	global:log "log"
+	global:log 	{ key = "value", 1223; [122 + 38 *90] = zzz, 2000; 3000 }
 `))
 	if err != nil {
 		t.Error(err)
@@ -327,6 +332,24 @@ func TestParseFunctionCall(t *testing.T) {
 		_, ok := exp.(*ast.FunctionCall)
 		if !ok {
 			t.Fail()
+		}
+		fmt.Println(exp.String())
+	}
+}
+
+func TestParseTable(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	{}
+	{1,2,3}
+	{ key = "value", 1223; [122 + 38 *90] = zzz, 2000; 3000 }
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile {
+		exp, err := p.parseExp12()
+		if err != nil {
+			t.Error(err)
 		}
 		fmt.Println(exp.String())
 	}
