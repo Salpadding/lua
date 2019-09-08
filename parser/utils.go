@@ -51,10 +51,7 @@ func (p *Parser) parseArguments() (ast.Arguments, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := p.assertType(p.current, token.RightParenthesis); err != nil {
-			return nil, err
-		}
-		if _, err := p.nextToken(1); err != nil {
+		if err := p.assertCurrentAndSkip(token.RightParenthesis); err != nil {
 			return nil, err
 		}
 		return res, nil

@@ -512,13 +512,6 @@ func (p *Parser) parsePrefix0() (ast.Expression, error) {
 	}
 }
 
-func (p *Parser) assertType(tk token.Token, t token.Type) error {
-	if tk.Type() == t {
-		return nil
-	}
-	return errUnexpectedError(tk)
-}
-
 func (p *Parser) parseTable() (ast.Table, error) {
 	// skip '{'
 	if _, err := p.nextToken(1); err != nil {
@@ -536,13 +529,10 @@ func (p *Parser) parseTable() (ast.Table, error) {
 			if err != nil {
 				return nil, err
 			}
-			if err = p.assertType(p.current, token.RightBracket); err != nil {
+			if err = p.assertCurrentAndSkip(token.RightBracket); err != nil {
 				return nil, err
 			}
-			if err = p.assertType(p.next, token.Assign); err != nil {
-				return nil, err
-			}
-			if _, err = p.nextToken(2); err != nil {
+			if err = p.assertCurrentAndSkip(token.Assign); err != nil {
 				return nil, err
 			}
 			v, err := p.parseExp12()
@@ -555,8 +545,8 @@ func (p *Parser) parseTable() (ast.Table, error) {
 			})
 		case token.Identifier:
 			id := p.current.String()
-			if err := p.assertType(p.next, token.Assign); err != nil {
-				return nil, err
+			if p.next.Type() != token.Assign {
+				return nil, errUnexpectedError(p.next)
 			}
 			if _, err := p.nextToken(2); err != nil {
 				return nil, err
@@ -593,10 +583,7 @@ func (p *Parser) parseTable() (ast.Table, error) {
 			return nil, err
 		}
 	}
-	if err := p.assertType(p.current, token.RightBrace); err != nil {
-		return nil, err
-	}
-	if _, err := p.nextToken(1); err != nil {
+	if err := p.assertCurrentAndSkip(token.RightBrace); err != nil {
 		return nil, err
 	}
 	return pairs, nil

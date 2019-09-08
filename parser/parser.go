@@ -45,7 +45,7 @@ type Parser struct {
 }
 
 func (p *Parser) nextToken(count int) (token.Token, error) {
-	for i := 0; i < count; i++{
+	for i := 0; i < count; i++ {
 		p.current = p.next
 		next, err := p.Lexer.NextToken()
 		if err != nil {

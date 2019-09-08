@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -91,10 +92,10 @@ type Repeat struct {
 	Body      *Block
 }
 
-func(r *Repeat) statement(){}
+func (r *Repeat) statement() {}
 
-func(r *Repeat) String() string{
-	return fmt.Sprintf("repeat \n %s \nuntil\n %s", r.Body.String(), r.Condition.String())
+func (r *Repeat) String() string {
+	return fmt.Sprintf("repeat \n %s \nuntil %s", r.Body.String(), r.Condition.String())
 }
 
 type LocalAssign struct {
@@ -109,7 +110,7 @@ func (l *LocalAssign) String() string {
 	for i := range ids {
 		ids[i] = l.Identifiers[i]
 	}
-	return (&Assign{
+	return "local " + (&Assign{
 		Vars:   ids,
 		Values: l.Values,
 	}).String()
@@ -142,4 +143,65 @@ type Function struct {
 
 type LocalFunction struct {
 	*Function
+}
+
+type Branch struct {
+	Condition Expression
+	Body      *Block
+}
+
+type If struct {
+	Consequence  *Branch
+	Alternatives []*Branch
+	Else         *Block
+}
+
+func (i *If) statement() {}
+
+func (i *If) String() string {
+	cons := fmt.Sprintf("if %s then\n %s\n", i.Consequence.Condition.String(), i.Consequence.Body.String())
+	buf := bytes.NewBufferString(cons)
+	if i.Alternatives != nil {
+		for _, a := range i.Alternatives {
+			buf.WriteString(fmt.Sprintf("elseif %s then\n %s\n", a.Condition.String(), a.Body.String()))
+		}
+	}
+	if i.Else != nil {
+		buf.WriteString(fmt.Sprintf("else\n %s\nend\n", i.Else.String()))
+	}
+	return buf.String()
+}
+
+type For struct {
+	Name  Identifier
+	Start Expression
+	Stop  Expression
+	Step  Expression
+	Body  *Block
+}
+
+func (f *For) statement() {}
+
+func (f *For) String() string {
+	buf := bytes.NewBufferString(fmt.Sprintf("for %s = %s, %s", f.Name, f.Start, f.Stop))
+	if f.Step != nil {
+		buf.WriteString(", ")
+		buf.WriteString(f.Step.String())
+	}
+	buf.WriteString(" do \n")
+	buf.WriteString(f.Body.String())
+	buf.WriteString("\nend")
+	return buf.String()
+}
+
+type ForIn struct {
+	NameList    []Identifier
+	Expressions Expressions
+	Body        *Block
+}
+
+func (f *ForIn) statement() {}
+
+func (f *ForIn) String() string {
+	return ""
 }

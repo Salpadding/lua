@@ -26,10 +26,7 @@ func (p *Parser) parseAssign() (*ast.Assign, error) {
 			return nil, err
 		}
 	}
-	if p.current.Type() != token.Assign {
-		return nil, errUnexpectedError(p.current)
-	}
-	if _, err := p.nextToken(1); err != nil {
+	if err := p.assertCurrentAndSkip(token.Assign); err != nil {
 		return nil, err
 	}
 	values, err := p.parseExpressions()
@@ -51,10 +48,7 @@ func (p *Parser) parseDoBlockEnd() (*ast.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = p.assertType(p.current, token.End); err != nil {
-		return nil, err
-	}
-	if _, err := p.nextToken(1); err != nil {
+	if err = p.assertCurrentAndSkip(token.End); err != nil {
 		return nil, err
 	}
 	return blk, nil
@@ -69,8 +63,8 @@ func (p *Parser) parseWhile() (*ast.While, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = p.assertType(p.current, token.Do); err != nil {
-		return nil, err
+	if p.current.Type() != token.Do {
+		return nil, errUnexpectedError(p.current)
 	}
 	blk, err := p.parseDoBlockEnd()
 	if err != nil {
@@ -91,10 +85,7 @@ func (p *Parser) parseRepeat() (*ast.Repeat, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = p.assertType(p.current, token.Until); err != nil {
-		return nil, err
-	}
-	if _, err := p.nextToken(1); err != nil {
+	if err = p.assertCurrentAndSkip(token.Until); err != nil {
 		return nil, err
 	}
 	cond, err := p.parseExp12()
@@ -107,7 +98,7 @@ func (p *Parser) parseRepeat() (*ast.Repeat, error) {
 	}, nil
 }
 
-func (p *Parser) parseLocalAssign() (ast.Statement, error) {
+func (p *Parser) parseLocalAssign() (*ast.LocalAssign, error) {
 	// skip local
 	if _, err := p.nextToken(1); err != nil {
 		return nil, err
@@ -156,4 +147,77 @@ func (p *Parser) parseReturn() (*ast.Return, error) {
 		}
 		return &ast.Return{Values: exps}, nil
 	}
+}
+
+func (p *Parser) assertCurrentAndSkip(t token.Type) error {
+	if p.current.Type() != t {
+		return errUnexpectedError(p.current)
+	}
+	if _, err := p.nextToken(1); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Parser) parseIf() (*ast.If, error) {
+	// skip if
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	cond, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.assertCurrentAndSkip(token.Then); err != nil {
+		return nil, err
+	}
+	body, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	res := &ast.If{
+		Consequence: &ast.Branch{
+			Condition: cond,
+			Body:      body,
+		},
+		Alternatives: []*ast.Branch{},
+	}
+	for p.current.Type() == token.ElseIf {
+		if _, err = p.nextToken(1); err != nil {
+			return nil, err
+		}
+		cond, err = p.parseExp12()
+		if err != nil {
+			return nil, err
+		}
+		if err := p.assertCurrentAndSkip(token.Then); err != nil {
+			return nil, err
+		}
+		body, err = p.parseBlock()
+		if err != nil {
+			return nil, err
+		}
+		res.Alternatives = append(res.Alternatives, &ast.Branch{
+			Condition: cond,
+			Body:      body,
+		})
+	}
+	if p.current.Type() == token.End {
+		if _, err = p.nextToken(1); err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+	if err := p.assertCurrentAndSkip(token.Else); err != nil {
+		return nil, err
+	}
+	body, err = p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	res.Else = body
+	if err := p.assertCurrentAndSkip(token.End); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
