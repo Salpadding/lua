@@ -3,11 +3,9 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/Salpadding/lua/common"
 	"github.com/Salpadding/lua/token"
+	"strconv"
 )
 
 type Expression interface {
@@ -70,7 +68,7 @@ type String string
 func (s String) expression() {}
 
 func (s String) String() string {
-	return `"` + common.Escape(bytes.NewBufferString(string(s))) + `"`
+	return fmt.Sprintf(`"%s"`, common.Escape(bytes.NewBufferString(string(s))))
 }
 
 func (s String) arguments() {}
@@ -127,16 +125,16 @@ type Keypair struct {
 	Value Expression
 }
 
+func (k *Keypair) String() string {
+	return fmt.Sprintf("%s = %s", k.Key, k.Value)
+}
+
 type Table []*Keypair
 
 func (tb Table) expression() {}
 
 func (tb Table) String() string {
-	res := make([]string, len(tb))
-	for i := range res {
-		res[i] = fmt.Sprintf("%s = %s", tb[i].Key.String(), tb[i].Value.String())
-	}
-	return fmt.Sprintf("{ %s }", strings.Join(res, ", "))
+	return fmt.Sprintf("{ %s }", joinComma(tb))
 }
 
 func (tb Table) arguments() {}

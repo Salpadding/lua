@@ -200,3 +200,37 @@ func TestAAA(t *testing.T) {
 	}
 	fmt.Println(str)
 }
+
+func TestFor1(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	for i = 1 + 1, 10, 1 * 2 do
+		a = 1 + 2
+		b = 1 + a
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseFor()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(blk.String())
+}
+
+func TestFor2(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	for k, v in {12, k = "v", [133] = "addff"} do
+		a = 1 + 2
+		b = 1 + a
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseFor()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(blk.String())
+}

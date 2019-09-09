@@ -221,3 +221,103 @@ func (p *Parser) parseIf() (*ast.If, error) {
 	}
 	return res, nil
 }
+
+func (p *Parser) parseFor() (ast.Statement, error) {
+	// skip for
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	if p.next.Type() == token.Assign{
+		return p.parseForNum()
+	}
+	return p.parseForIn()
+}
+
+func (p *Parser) parseForNum() (*ast.For, error) {
+	id := p.current.String()
+	if err := p.assertCurrentAndSkip(token.Identifier); err != nil {
+		return nil, err
+	}
+	if err := p.assertCurrentAndSkip(token.Assign); err != nil {
+		return nil, err
+	}
+	start, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.assertCurrentAndSkip(token.Comma); err != nil {
+		return nil, err
+	}
+	stop, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	stmt := &ast.For{
+		Name:  ast.Identifier(id),
+		Start: start,
+		Stop:  stop,
+		Step:  nil,
+		Body:  nil,
+	}
+	if p.current.Type() != token.Comma && p.current.Type() != token.Do {
+		return nil, errUnexpectedError(p.current)
+	}
+	if p.current.Type() != token.Comma {
+		stmt.Body, err = p.parseDoBlockEnd()
+		if err != nil {
+			return nil, err
+		}
+		return stmt, nil
+	}
+	// skip ,
+	if _, err = p.nextToken(1); err != nil {
+		return nil, err
+	}
+	step, err := p.parseExp12()
+	if err != nil {
+		return nil, err
+	}
+	stmt.Step = step
+	if p.current.Type() != token.Do {
+		return nil, errUnexpectedError(p.current)
+	}
+	stmt.Body, err = p.parseDoBlockEnd()
+	if err != nil {
+		return nil, err
+	}
+	return stmt, nil
+}
+
+func(p *Parser) parseForIn() (*ast.ForIn, error){
+	namelist, err := p.parseExpressions()
+	if err != nil{
+		return nil, err
+	}
+	names := make([]ast.Identifier, len(namelist))
+	for i, n := range namelist{
+		id, ok := n.(ast.Identifier)
+		if !ok{
+			return nil, errUnexpectedError(p.current)
+		}
+		names[i] = id
+	}
+	if err = p.assertCurrentAndSkip(token.In); err != nil{
+		return nil, err
+	}
+	exps, err := p.parseExpressions()
+	if err != nil{
+		return nil, err
+	}
+	if p.current.Type() != token.Do{
+		return nil, errUnexpectedError(p.current)
+	}
+	body, err := p.parseDoBlockEnd()
+	if err != nil{
+		return nil, err
+	}
+	return &ast.ForIn{
+		NameList:    names,
+		Expressions: exps,
+		Body:        body,
+	}, nil
+}

@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -19,14 +20,11 @@ type Block struct {
 //func (b Block) statement() {}
 
 func (b *Block) String() string {
-	res := make([]string, len(b.Statements))
-	for i := range res {
-		res[i] = b.Statements[i].String()
-	}
+	g := toGeneral(b.Statements)
 	if b.Return != nil {
-		res = append(res, b.Return.String())
+		g = append(g, b.Return)
 	}
-	return strings.Join(res, "\n")
+	return join(g, "\n")
 }
 
 // ;
@@ -106,14 +104,7 @@ type LocalAssign struct {
 func (l *LocalAssign) statement() {}
 
 func (l *LocalAssign) String() string {
-	ids := make([]Expression, len(l.Identifiers))
-	for i := range ids {
-		ids[i] = l.Identifiers[i]
-	}
-	return "local " + (&Assign{
-		Vars:   ids,
-		Values: l.Values,
-	}).String()
+	return fmt.Sprintf("local %s = %s", joinComma(l.Identifiers), joinComma(l.Values))
 }
 
 type Assign struct {
@@ -124,15 +115,7 @@ type Assign struct {
 func (a *Assign) statement() {}
 
 func (a *Assign) String() string {
-	vars := make([]string, len(a.Vars))
-	values := make([]string, len(a.Values))
-	for i := range vars {
-		vars[i] = a.Vars[i].String()
-	}
-	for i := range values {
-		values[i] = a.Values[i].String()
-	}
-	return fmt.Sprintf("%s = %s", strings.Join(vars, ", "), strings.Join(values, ", "))
+	return fmt.Sprintf("%s = %s", joinComma(a.Vars), joinComma(a.Values))
 }
 
 type Function struct {
@@ -203,5 +186,32 @@ type ForIn struct {
 func (f *ForIn) statement() {}
 
 func (f *ForIn) String() string {
-	return ""
+	return fmt.Sprintf("for %s in %s do\n%s\nend\n", joinComma(f.NameList), joinComma(f.Expressions), f.Body.String())
+}
+
+func joinComma(i interface{}) string {
+	return join(toGeneral(i), ", ")
+}
+
+func join(li []interface{}, sep string) string {
+	res := make([]string, len(li))
+	for i := range res {
+		str, ok := li[i].(fmt.Stringer)
+		if !ok {
+			return ""
+		}
+		res[i] = str.String()
+	}
+	return strings.Join(res, sep)
+}
+func toGeneral(args interface{}) []interface{} {
+	s := reflect.ValueOf(args)
+	if s.Kind() != reflect.Slice {
+		panic("toGeneral given a non-slice type")
+	}
+	ret := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		ret[i] = s.Index(i).Interface()
+	}
+	return ret
 }
