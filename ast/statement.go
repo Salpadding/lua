@@ -17,7 +17,7 @@ type Block struct {
 	Return     *Return
 }
 
-//func (b Block) statement() {}
+func (b Block) statement() {}
 
 func (b *Block) String() string {
 	g := toGeneral(b.Statements)

@@ -364,7 +364,7 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 			}
 			return &ast.Nil{}, nil
 		case token.Function:
-			return p.parseFunction()
+			return p.parseLambda()
 		default:
 			return p.parsePrefix1()
 		}

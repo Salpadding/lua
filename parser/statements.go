@@ -331,11 +331,11 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 		return nil, err
 	}
 	parameters, err := p.parseParameters()
-	if err != nil {
+	if err != nil{
 		return nil, err
 	}
 	body, err := p.parseBlock()
-	if err != nil {
+	if err != nil{
 		return nil, err
 	}
 	if err := p.assertCurrentAndSkip(token.End); err != nil {
@@ -377,7 +377,7 @@ func (p *Parser) parseParameters() ([]ast.Parameter, error) {
 		if p.current.Type() != token.Comma {
 			break
 		}
-		if p.next.Type() == token.Varying {
+		if p.next.Type() == token.Varying{
 			res = append(res, ast.Vararg("..."))
 			if _, err := p.nextToken(2); err != nil {
 				return nil, err

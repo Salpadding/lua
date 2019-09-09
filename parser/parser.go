@@ -27,7 +27,7 @@ exp3  ::= exp2 {(‘*’ | ‘/’ | ‘//’ | ‘%’) exp2}
 exp2  ::= exp1 | (‘not’ | ‘#’ | ‘-’ | ‘~’) exp1
 exp1  ::= exp0 {‘^’ exp2}
 exp0  ::= nil | false | true | Numeral | LiteralString
-		| ‘...’ | functiondef | prefixexp | tableconstructor
+		| ‘...’ | functiondef | prefixexp1 | tableconstructor
 */
 
 /*
@@ -67,7 +67,7 @@ func New(reader io.RuneReader) (*Parser, error) {
 }
 
 func (p *Parser) Parse() (*ast.Block, error) {
-	return nil, nil
+	return p.parseBlock()
 }
 
 func (p *Parser) parseStatements() ([]ast.Statement, error) {
@@ -138,8 +138,43 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 			return nil, err
 		}
 		return ast.Goto(id), nil
+	case token.Do:
+		return p.parseDoBlockEnd()
+	case token.While:
+		return p.parseWhile()
+	case token.Repeat:
+		return p.parseRepeat()
+	case token.If:
+		return p.parseIf()
+	case token.For:
+		return p.parseFor()
+	case token.Function:
+		return p.parseFunction()
+	case token.Local:
+		if p.next.Type() == token.Function {
+			if _, err := p.nextToken(1); err != nil {
+				return nil, err
+			}
+			function, err := p.parseFunction()
+			if err != nil {
+				return nil, err
+			}
+			return &ast.LocalFunction{Function: function}, nil
+		}
+		return p.parseLocalAssign()
 	default:
-		return p.parseAssign()
+		if p.next.Type() == token.Comma || p.next.Type() == token.Assign {
+			return p.parseAssign()
+		}
+		call, err := p.parsePrefix1()
+		if err != nil {
+			return nil, err
+		}
+		c, ok := call.(*ast.FunctionCall)
+		if !ok {
+			return nil, errUnexpectedError(p.current)
+		}
+		return c, nil
 	}
 }
 
