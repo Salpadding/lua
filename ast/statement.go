@@ -131,7 +131,7 @@ func (f *Function) expression() {}
 func (f *Function) statement() {}
 
 func (f *Function) String() string {
-	return fmt.Sprintf("function %s (%s)\n%s\nend ", f.Name, joinComma(f.Parameters), indent(2, f.Body.String()))
+	return fmt.Sprintf("function %s (%s)\n%s\nend\n", f.Name, joinComma(f.Parameters), indent(2, f.Body.String()))
 }
 
 type LocalFunction struct {
@@ -162,7 +162,7 @@ func (i *If) String() string {
 	if i.Else != nil {
 		buf.WriteString(fmt.Sprintf("else\n%s\n", indent(2, i.Else.String())))
 	}
-	buf.WriteString("end\n")
+	buf.WriteString("end")
 	return buf.String()
 }
 
@@ -197,5 +197,5 @@ type ForIn struct {
 func (f *ForIn) statement() {}
 
 func (f *ForIn) String() string {
-	return fmt.Sprintf("for %s in %s do\n%s\nend\n", joinComma(f.NameList), joinComma(f.Expressions), indent(2, f.Body.String()))
+	return fmt.Sprintf("for %s in %s do\n%s\nend", joinComma(f.NameList), joinComma(f.Expressions), indent(2, f.Body.String()))
 }
