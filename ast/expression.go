@@ -34,7 +34,7 @@ type InfixExpression struct {
 func (e *InfixExpression) expression() {}
 
 func (e *InfixExpression) String() string {
-	return fmt.Sprintf("(%s %s %s)", e.Left.String(), e.Operator.String(), e.Right.String())
+	return fmt.Sprintf("%s %s %s", e.Left.String(), e.Operator.String(), e.Right.String())
 }
 
 type Number float64
@@ -109,9 +109,9 @@ func (f *FunctionCall) String() string {
 		f.Args = Expressions{}
 	}
 	if f.Self == nil {
-		return fmt.Sprintf("( %s ) ( %s )", f.Function.String(), f.Args.String())
+		return fmt.Sprintf("%s(%s)", f.Function, f.Args.String())
 	}
-	return fmt.Sprintf("%s:%s ( %s )", f.Self.String(), f.Function.String(), f.Args.String())
+	return fmt.Sprintf("%s:%s (%s)", f.Self.String(), f.Function.String(), f.Args.String())
 }
 
 type TableAccess struct {
@@ -122,7 +122,7 @@ type TableAccess struct {
 func (i *TableAccess) expression() {}
 
 func (i *TableAccess) String() string {
-	return fmt.Sprintf("(%s[ %s ])", i.Left.String(), i.Index.String())
+	return fmt.Sprintf("%s[%s]", i.Left.String(), i.Index.String())
 }
 
 type Keypair struct {

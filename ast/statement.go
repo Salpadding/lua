@@ -81,7 +81,7 @@ type While struct {
 func (w *While) statement() {}
 
 func (w *While) String() string {
-	return fmt.Sprintf("while %s \ndo\n %s \nend", w.Condition.String(), w.Body.String())
+	return fmt.Sprintf("while %s do\n%s\nend", w.Condition.String(), indent(2, w.Body.String()))
 }
 
 type Repeat struct {
@@ -128,7 +128,7 @@ func (f *Function) expression() {}
 func (f *Function) statement() {}
 
 func (f *Function) String() string {
-	return fmt.Sprintf("function %s (%s)\n%s\nend ", f.Name, joinComma(f.Parameters), f.Body)
+	return fmt.Sprintf("function %s (%s)\n%s\nend ", f.Name, joinComma(f.Parameters), indent(2, f.Body.String()))
 }
 
 type LocalFunction struct {
@@ -149,16 +149,17 @@ type If struct {
 func (i *If) statement() {}
 
 func (i *If) String() string {
-	cons := fmt.Sprintf("if %s then\n %s\n", i.Consequence.Condition.String(), i.Consequence.Body.String())
+	cons := fmt.Sprintf("if %s then\n%s\n", i.Consequence.Condition.String(), indent(2, i.Consequence.Body.String()))
 	buf := bytes.NewBufferString(cons)
 	if i.Alternatives != nil {
 		for _, a := range i.Alternatives {
-			buf.WriteString(fmt.Sprintf("elseif %s then\n %s\n", a.Condition.String(), a.Body.String()))
+			buf.WriteString(fmt.Sprintf("elseif %s then\n%s\n", a.Condition.String(), indent(2, a.Body.String())))
 		}
 	}
 	if i.Else != nil {
-		buf.WriteString(fmt.Sprintf("else\n %s\nend\n", i.Else.String()))
+		buf.WriteString(fmt.Sprintf("else\n%s\n", indent(2, i.Else.String())))
 	}
+	buf.WriteString("end\n")
 	return buf.String()
 }
 
@@ -178,8 +179,8 @@ func (f *For) String() string {
 		buf.WriteString(", ")
 		buf.WriteString(f.Step.String())
 	}
-	buf.WriteString(" do \n")
-	buf.WriteString(f.Body.String())
+	buf.WriteString(" do\n")
+	buf.WriteString(indent(2, f.Body.String()))
 	buf.WriteString("\nend")
 	return buf.String()
 }

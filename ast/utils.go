@@ -45,8 +45,8 @@ func indent(length int, in string) string {
 		line, err = buf.ReadString('\n')
 		for i := 0; i < length; i++ {
 			res.WriteRune(' ')
-			res.WriteString(line)
 		}
+		res.WriteString(line)
 	}
 	return res.String()
 }

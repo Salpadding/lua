@@ -395,7 +395,7 @@ func (p *Parser) parsePrefix1() (ast.Expression, error) {
 			}
 			left = &ast.TableAccess{
 				Left:  left,
-				Index: ast.Identifier(p.next.String()),
+				Index: ast.String(p.next.String()),
 			}
 			if _, err = p.nextToken(2); err != nil {
 				return nil, err
