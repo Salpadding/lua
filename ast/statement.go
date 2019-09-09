@@ -103,6 +103,9 @@ type LocalAssign struct {
 func (l *LocalAssign) statement() {}
 
 func (l *LocalAssign) String() string {
+	if len(l.Values) == 0{
+		return fmt.Sprintf("local %s", joinComma(l.Identifiers))
+	}
 	return fmt.Sprintf("local %s = %s", joinComma(l.Identifiers), joinComma(l.Values))
 }
 
@@ -194,5 +197,5 @@ type ForIn struct {
 func (f *ForIn) statement() {}
 
 func (f *ForIn) String() string {
-	return fmt.Sprintf("for %s in %s do\n%s\nend\n", joinComma(f.NameList), joinComma(f.Expressions), f.Body.String())
+	return fmt.Sprintf("for %s in %s do\n%s\nend\n", joinComma(f.NameList), joinComma(f.Expressions), indent(2, f.Body.String()))
 }
