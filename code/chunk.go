@@ -6,9 +6,24 @@ import (
 	"errors"
 	"io"
 	"math"
+
+	"github.com/Salpadding/lua/code/tag"
 )
 
 type Prototype struct {
+	Source          string // debug
+	LineDefined     uint32
+	LastLineDefined uint32
+	NumParams       byte
+	IsVararg        byte
+	MaxStackSize    byte
+	Code            []Instruction
+	Constants       []Value
+	UpValues        []UpValue
+	Prototypes      []*Prototype
+	LineInfo        []uint32         // debug
+	LocalVariables  []*LocalVariable // debug
+	UpvalueNames    []string         // debug
 }
 
 type Chunk struct {
@@ -99,8 +114,121 @@ func (b *ByteCodeReader) ReadString() (string, error) {
 	return string(str), nil
 }
 
+func (b *ByteCodeReader) Load() (*Prototype, error) {
+	if err := b.checkHeader(); err != nil {
+		return nil, err
+	}
+	return b.ReadPrototype()
+}
+
 func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
-	return nil, nil
+	res := &Prototype{}
+	var err error
+	if res.Source, err = b.ReadString(); err != nil {
+		return nil, err
+	}
+	if res.LineDefined, err = b.ReadUint32(); err != nil {
+		return nil, err
+	}
+	if res.NumParams, err = b.ReadByte(); err != nil {
+		return nil, err
+	}
+	if res.IsVararg, err = b.ReadByte(); err != nil {
+		return nil, err
+	}
+	if res.MaxStackSize, err = b.ReadByte(); err != nil {
+		return nil, err
+	}
+	if res.Code, err = b.readCode(); err != nil {
+		return nil, err
+	}
+	if res.Constants, err = b.readConstants(); err != nil {
+		return nil, err
+	}
+	if res.UpValues, err = b.readUpValues(); err != nil {
+		return nil, err
+	}
+	if res.Prototypes, err = b.readPrototypes(); err != nil {
+		return nil, err
+	}
+	if res.LineInfo, err = b.readLineInfo(); err != nil {
+		return nil, err
+	}
+	if res.LocalVariables, err = b.readLocalVariables(); err != nil {
+		return nil, err
+	}
+	if res.UpvalueNames, err = b.readUpValueNames(); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (b *ByteCodeReader) readCode() ([]Instruction, error) {
+	codes, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	code := make([]Instruction, codes)
+	for i := range code {
+		c, err := b.ReadUint32()
+		if err != nil {
+			return nil, err
+		}
+		code[i] = Instruction(c)
+	}
+	return code, nil
+}
+
+func (b *ByteCodeReader) readConstants() ([]Value, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	constants := make([]Value, size)
+	for i := range constants {
+		constants[i], err = b.readConstant()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return constants, nil
+}
+
+func (b *ByteCodeReader) readConstant() (Value, error) {
+	t, err := b.ReadByte()
+	if err != nil {
+		return nil, err
+	}
+	switch t {
+	case tag.Nil:
+		return Nil("nil"), nil
+	case tag.Boolean:
+		n, err := b.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		return Boolean(n != 0), nil
+	case tag.Number:
+		i, err := b.ReadFloat()
+		if err != nil {
+			return nil, err
+		}
+		return Number(i), nil
+	case tag.Integer:
+		i, err := b.ReadInt()
+		if err != nil {
+			return nil, err
+		}
+		return Integer(i), nil
+	case tag.ShortString, tag.LongString:
+		str, err := b.ReadString()
+		if err != nil {
+			return nil, err
+		}
+		return String(str), nil
+	default:
+		return nil, errors.New("unsupported constant type")
+	}
 }
 
 func (b *ByteCodeReader) checkHeader() error {
@@ -138,4 +266,86 @@ func (b *ByteCodeReader) checkHeader() error {
 		return errors.New("float format mismatch")
 	}
 	return nil
+}
+
+func (b *ByteCodeReader) readPrototypes() ([]*Prototype, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	prototypes := make([]*Prototype, size)
+	for i := range prototypes {
+		prototypes[i], err = b.ReadPrototype()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return prototypes, nil
+}
+
+func (b *ByteCodeReader) readUpValues() ([]UpValue, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	upValues := make([]UpValue, size)
+	for i := range upValues {
+		val, err := b.ReadBytes(2)
+		if err != nil {
+			return nil, err
+		}
+		copy(upValues[i][:], val[:])
+	}
+	return upValues, nil
+}
+
+func (b *ByteCodeReader) readLineInfo() ([]uint32, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	lineInfo := make([]uint32, size)
+	for i := range lineInfo {
+		lineInfo[i], err = b.ReadUint32()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return lineInfo, nil
+}
+
+func (b *ByteCodeReader) readLocalVariables() ([]*LocalVariable, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	localVariables := make([]*LocalVariable, size)
+	for i := range localVariables {
+		localVariables[i] = &LocalVariable{}
+		if localVariables[i].Name, err = b.ReadString(); err != nil {
+			return nil, err
+		}
+		if localVariables[i].StartPC, err = b.ReadUint32(); err != nil {
+			return nil, err
+		}
+		if localVariables[i].EndPC, err = b.ReadUint32(); err != nil {
+			return nil, err
+		}
+	}
+	return localVariables, nil
+}
+
+func (b *ByteCodeReader) readUpValueNames() ([]string, error) {
+	size, err := b.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, size)
+	for i := range names {
+		names[i], err = b.ReadString()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return names, nil
 }
