@@ -118,6 +118,10 @@ func (b *ByteCodeReader) Load() (*Prototype, error) {
 	if err := b.checkHeader(); err != nil {
 		return nil, err
 	}
+	if _, err := b.ReadByte(); err != nil {
+		return nil, err
+	} // size_upvalues
+
 	return b.ReadPrototype()
 }
 
@@ -128,6 +132,9 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 		return nil, err
 	}
 	if res.LineDefined, err = b.ReadUint32(); err != nil {
+		return nil, err
+	}
+	if res.LastLineDefined, err = b.ReadUint32(); err != nil{
 		return nil, err
 	}
 	if res.NumParams, err = b.ReadByte(); err != nil {
