@@ -227,7 +227,7 @@ func (p *Parser) parseFor() (ast.Statement, error) {
 	if _, err := p.nextToken(1); err != nil {
 		return nil, err
 	}
-	if p.next.Type() == token.Assign{
+	if p.next.Type() == token.Assign {
 		return p.parseForNum()
 	}
 	return p.parseForIn()
@@ -288,31 +288,31 @@ func (p *Parser) parseForNum() (*ast.For, error) {
 	return stmt, nil
 }
 
-func(p *Parser) parseForIn() (*ast.ForIn, error){
+func (p *Parser) parseForIn() (*ast.ForIn, error) {
 	namelist, err := p.parseExpressions()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	names := make([]ast.Identifier, len(namelist))
-	for i, n := range namelist{
+	for i, n := range namelist {
 		id, ok := n.(ast.Identifier)
-		if !ok{
+		if !ok {
 			return nil, errUnexpectedError(p.current)
 		}
 		names[i] = id
 	}
-	if err = p.assertCurrentAndSkip(token.In); err != nil{
+	if err = p.assertCurrentAndSkip(token.In); err != nil {
 		return nil, err
 	}
 	exps, err := p.parseExpressions()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	if p.current.Type() != token.Do{
+	if p.current.Type() != token.Do {
 		return nil, errUnexpectedError(p.current)
 	}
 	body, err := p.parseDoBlockEnd()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	return &ast.ForIn{
@@ -320,4 +320,76 @@ func(p *Parser) parseForIn() (*ast.ForIn, error){
 		Expressions: exps,
 		Body:        body,
 	}, nil
+}
+
+func (p *Parser) parseFunction() (*ast.Function, error) {
+	if err := p.assertCurrentAndSkip(token.Function); err != nil {
+		return nil, err
+	}
+	name := ast.Identifier(p.current.String())
+	if err := p.assertCurrentAndSkip(token.Identifier); err != nil {
+		return nil, err
+	}
+	parameters, err := p.parseParameters()
+	if err != nil {
+		return nil, err
+	}
+	body, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.assertCurrentAndSkip(token.End); err != nil {
+		return nil, err
+	}
+	return &ast.Function{
+		Name:       name,
+		Body:       body,
+		Parameters: parameters,
+	}, nil
+}
+
+func (p *Parser) parseParameters() ([]ast.Parameter, error) {
+	var res []ast.Parameter
+	if p.next.Type() == token.RightParenthesis {
+		if _, err := p.nextToken(2); err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	if p.next.Type() == token.Varying {
+		if _, err := p.nextToken(2); err != nil {
+			return nil, err
+		}
+		if err := p.assertCurrentAndSkip(token.RightParenthesis); err != nil {
+			return nil, err
+		}
+		return []ast.Parameter{ast.Vararg("...")}, nil
+	}
+	for {
+		id := ast.Identifier(p.current.String())
+		if _, err := p.nextToken(1); err != nil {
+			return nil, err
+		}
+		res = append(res, id)
+		if p.current.Type() != token.Comma {
+			break
+		}
+		if p.next.Type() == token.Varying {
+			res = append(res, ast.Vararg("..."))
+			if _, err := p.nextToken(2); err != nil {
+				return nil, err
+			}
+			break
+		}
+		if _, err := p.nextToken(1); err != nil {
+			return nil, err
+		}
+	}
+	if err := p.assertCurrentAndSkip(token.RightParenthesis); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

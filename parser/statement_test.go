@@ -234,3 +234,54 @@ func TestFor2(t *testing.T) {
 	}
 	fmt.Println(blk.String())
 }
+
+func TestFunction1(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	function main (a, b, c, ...)
+		c = 2
+		return a + b + c	
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseFunction()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(blk.String())
+}
+
+func TestFunction2(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	function main (...)
+		c = 2
+		return a + b + c	
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseFunction()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(blk.String())
+}
+
+func TestFunction3(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	function main ()
+		c = 2
+		return a + b + c	
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	blk, err := p.parseFunction()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(blk.String())
+}

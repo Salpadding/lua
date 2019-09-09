@@ -81,6 +81,8 @@ func (i Identifier) String() string {
 	return string(i)
 }
 
+func (i Identifier) parameter() {}
+
 type Vararg string
 
 func (v Vararg) expression() {}
@@ -88,6 +90,8 @@ func (v Vararg) expression() {}
 func (v Vararg) String() string {
 	return string(v)
 }
+
+func (v Vararg) parameter() {}
 
 type FunctionCall struct {
 	Function Expression

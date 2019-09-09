@@ -119,9 +119,15 @@ func (a *Assign) String() string {
 }
 
 type Function struct {
-	Name      string
-	Body      Block
-	Arguments []Expression
+	Name       Identifier
+	Body       *Block
+	Parameters []Parameter
+}
+
+func(f *Function) statement(){}
+
+func(f *Function) String() string{
+	return fmt.Sprintf("function %s (%s)\n%s\nend ", f.Name, joinComma(f.Parameters), f.Body)
 }
 
 type LocalFunction struct {
