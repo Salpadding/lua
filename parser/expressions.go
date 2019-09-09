@@ -363,17 +363,19 @@ func (p *Parser) parseExp0() (ast.Expression, error) {
 				return nil, err
 			}
 			return &ast.Nil{}, nil
+		case token.Function:
+			return p.parseFunction()
 		default:
 			return p.parsePrefix1()
 		}
 	default:
-		if current.Type() == token.Varying {
+		switch p.current.Type() {
+		case token.Varying:
 			if _, err := p.nextToken(1); err != nil {
 				return nil, err
 			}
 			return ast.Vararg(current.String()), nil
-		}
-		if current.Type() == token.LeftBrace {
+		case token.LeftBrace:
 			return p.parseTable()
 		}
 		return p.parsePrefix1()
@@ -587,4 +589,26 @@ func (p *Parser) parseTable() (ast.Table, error) {
 		return nil, err
 	}
 	return pairs, nil
+}
+
+func (p *Parser) parseLambda() (*ast.Function, error) {
+	// skip function
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	parameters, err := p.parseParameters()
+	if err != nil {
+		return nil, err
+	}
+	body, err := p.parseBlock()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.assertCurrentAndSkip(token.End); err != nil {
+		return nil, err
+	}
+	return &ast.Function{
+		Body:       body,
+		Parameters: parameters,
+	}, nil
 }

@@ -124,9 +124,11 @@ type Function struct {
 	Parameters []Parameter
 }
 
-func(f *Function) statement(){}
+func (f *Function) expression() {}
 
-func(f *Function) String() string{
+func (f *Function) statement() {}
+
+func (f *Function) String() string {
 	return fmt.Sprintf("function %s (%s)\n%s\nend ", f.Name, joinComma(f.Parameters), f.Body)
 }
 

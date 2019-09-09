@@ -354,3 +354,21 @@ func TestParseTable(t *testing.T) {
 		fmt.Println(exp.String())
 	}
 }
+
+func TestParseFunction(t *testing.T) {
+	p, err := New(bytes.NewBufferString(`
+	function ()
+		return 1234
+	end
+`))
+	if err != nil {
+		t.Error(err)
+	}
+	for p.current.Type() != token.EndOfFile {
+		exp, err := p.parseExp12()
+		if err != nil {
+			t.Error(err)
+		}
+		fmt.Println(exp.String())
+	}
+}
