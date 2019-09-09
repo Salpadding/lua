@@ -99,6 +99,10 @@ func (b *ByteCodeReader) ReadString() (string, error) {
 	return string(str), nil
 }
 
+func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
+	return nil, nil
+}
+
 func (b *ByteCodeReader) checkHeader() error {
 	if sig, err := b.ReadBytes(4); err != nil || ! bytes.Equal(sig, []byte(LuaSignature)) {
 		return errors.New("signature check fail")
