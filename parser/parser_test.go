@@ -24,21 +24,21 @@ func testParser(t *testing.T, fname string) {
 }
 
 func TestParser1(t *testing.T) {
-	testParser(t, "p1.lua")
+	testParser(t, "testdata/p1.lua")
 }
 
 func TestParser2(t *testing.T) {
-	testParser(t, "p2.lua")
+	testParser(t, "testdata/p2.lua")
 }
 
 func TestParser3(t *testing.T) {
-	testParser(t, "p3.lua")
+	testParser(t, "testdata/p3.lua")
 }
 
 func TestParser4(t *testing.T) {
-	testParser(t, "p4.lua")
+	testParser(t, "testdata/p4.lua")
 }
 
 func TestParser5(t *testing.T) {
-	testParser(t, "p5.lua")
+	testParser(t, "testdata/p5.lua")
 }
