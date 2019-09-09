@@ -342,12 +342,20 @@ func TestParseTable(t *testing.T) {
 	{}
 	{1,2,3}
 	{ key = "value", 1223; [122 + 38 *90] = zzz, 2000; 3000 }
+{
+    RedBird = 1,
+    YellowBird = 1,
+    WoodBlock9 = 2,
+    KingPiglette = 1,
+    BlackBird = 1,
+    BoomerangBird = 1
+}
 `))
 	if err != nil {
 		t.Error(err)
 	}
 	for p.current.Type() != token.EndOfFile {
-		exp, err := p.parseExp12()
+		exp, err := p.parseTable()
 		if err != nil {
 			t.Error(err)
 		}

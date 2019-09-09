@@ -17,7 +17,7 @@ func (p *Parser) isReturnOrKeyword(tk token.Token) bool {
 func (p *Parser) parseExpressions() (ast.Expressions, error) {
 	var values ast.Expressions
 	for {
-		val, err := p.parseExpression()
+		val, err := p.parseExp12()
 		if err != nil {
 			return nil, err
 		}
@@ -30,6 +30,25 @@ func (p *Parser) parseExpressions() (ast.Expressions, error) {
 		}
 	}
 	return values, nil
+}
+
+// 解析标识符列表
+func (p *Parser) parseIdentifiers() ([]ast.Identifier, error) {
+	var vars []ast.Identifier
+	for {
+		id := p.current.String()
+		if err := p.assertCurrentAndSkip(token.Identifier); err != nil {
+			return nil, err
+		}
+		vars = append(vars, ast.Identifier(id))
+		if p.current.Type() != token.Comma {
+			break
+		}
+		if _, err := p.nextToken(1); err != nil {
+			return nil, err
+		}
+	}
+	return vars, nil
 }
 
 // 解析函数参数列表

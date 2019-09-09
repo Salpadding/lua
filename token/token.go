@@ -8,6 +8,25 @@ import (
 
 type Type int
 
+func (t Type) String() string {
+	for k, v := range Operators {
+		if v == t {
+			return k
+		}
+	}
+	for k, v := range Delimiters {
+		if v == t {
+			return k
+		}
+	}
+	for k, v := range Keywords {
+		if v == t {
+			return k
+		}
+	}
+	return ""
+}
+
 var Operators = map[string]Type{
 	"=":   Assign,
 	"+":   Plus,

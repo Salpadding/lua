@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/Salpadding/lua/ast"
 	"github.com/Salpadding/lua/token"
 )
@@ -103,21 +105,25 @@ func (p *Parser) parseLocalAssign() (*ast.LocalAssign, error) {
 	if _, err := p.nextToken(1); err != nil {
 		return nil, err
 	}
-	var ok bool
-	as, err := p.parseAssign()
+	ids, err := p.parseIdentifiers()
 	if err != nil {
 		return nil, err
 	}
-	ids := make([]ast.Identifier, len(as.Vars))
-	for i := range ids {
-		ids[i], ok = as.Vars[i].(ast.Identifier)
-		if !ok {
-			return nil, errUnexpectedError(p.current)
-		}
+	if p.current.Type() != token.Assign {
+		return &ast.LocalAssign{
+			Identifiers: ids,
+		}, nil
+	}
+	if _, err := p.nextToken(1); err != nil {
+		return nil, err
+	}
+	exps, err := p.parseExpressions()
+	if err != nil {
+		return nil, err
 	}
 	return &ast.LocalAssign{
 		Identifiers: ids,
-		Values:      as.Values,
+		Values:      exps,
 	}, nil
 }
 
@@ -151,7 +157,7 @@ func (p *Parser) parseReturn() (*ast.Return, error) {
 
 func (p *Parser) assertCurrentAndSkip(t token.Type) error {
 	if p.current.Type() != t {
-		return errUnexpectedError(p.current)
+		return errors.New(errUnexpectedError(p.current).Error() + " " + t.String() + " expected")
 	}
 	if _, err := p.nextToken(1); err != nil {
 		return err
@@ -331,11 +337,11 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 		return nil, err
 	}
 	parameters, err := p.parseParameters()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	body, err := p.parseBlock()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	if err := p.assertCurrentAndSkip(token.End); err != nil {
@@ -377,7 +383,7 @@ func (p *Parser) parseParameters() ([]ast.Parameter, error) {
 		if p.current.Type() != token.Comma {
 			break
 		}
-		if p.next.Type() == token.Varying{
+		if p.next.Type() == token.Varying {
 			res = append(res, ast.Vararg("..."))
 			if _, err := p.nextToken(2); err != nil {
 				return nil, err

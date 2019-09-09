@@ -163,18 +163,41 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 		}
 		return p.parseLocalAssign()
 	default:
-		if p.next.Type() == token.Comma || p.next.Type() == token.Assign {
-			return p.parseAssign()
-		}
 		call, err := p.parsePrefix1()
 		if err != nil {
 			return nil, err
 		}
 		c, ok := call.(*ast.FunctionCall)
-		if !ok {
+		if ok {
+			return c, nil
+		}
+		switch call.(type) {
+		case ast.Identifier, *ast.TableAccess:
+		default:
 			return nil, errUnexpectedError(p.current)
 		}
-		return c, nil
+		if p.current.Type() == token.Comma {
+			if _, err := p.nextToken(1); err != nil {
+				return nil, err
+			}
+			assign, err := p.parseAssign()
+			if err != nil {
+				return nil, err
+			}
+			assign.Vars = append([]ast.Expression{call}, assign.Vars...)
+			return assign, nil
+		}
+		if err = p.assertCurrentAndSkip(token.Assign); err != nil {
+			return nil, err
+		}
+		exps, err := p.parseExpressions()
+		if err != nil {
+			return nil, err
+		}
+		return &ast.Assign{
+			Vars:   []ast.Expression{call},
+			Values: exps,
+		}, nil
 	}
 }
 

@@ -17,7 +17,7 @@ func Test1(t *testing.T) {
 		column:     0,
 	}
 	for l.current == nil || !l.current.isEOF() {
-		l.ReadChar()
+		l.nextChar()
 		if l.current != nil && !l.current.isEOF() && l.column != 0 {
 			if l.current.rune() == '\n' || l.current.rune() == '\r' {
 				continue

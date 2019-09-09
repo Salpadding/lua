@@ -3,7 +3,6 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -195,31 +194,4 @@ func (f *ForIn) statement() {}
 
 func (f *ForIn) String() string {
 	return fmt.Sprintf("for %s in %s do\n%s\nend\n", joinComma(f.NameList), joinComma(f.Expressions), f.Body.String())
-}
-
-func joinComma(i interface{}) string {
-	return join(toGeneral(i), ", ")
-}
-
-func join(li []interface{}, sep string) string {
-	res := make([]string, len(li))
-	for i := range res {
-		str, ok := li[i].(fmt.Stringer)
-		if !ok {
-			return ""
-		}
-		res[i] = str.String()
-	}
-	return strings.Join(res, sep)
-}
-func toGeneral(args interface{}) []interface{} {
-	s := reflect.ValueOf(args)
-	if s.Kind() != reflect.Slice {
-		panic("toGeneral given a non-slice type")
-	}
-	ret := make([]interface{}, s.Len())
-	for i := 0; i < s.Len(); i++ {
-		ret[i] = s.Index(i).Interface()
-	}
-	return ret
 }

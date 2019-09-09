@@ -3,9 +3,10 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+
 	"github.com/Salpadding/lua/common"
 	"github.com/Salpadding/lua/token"
-	"strconv"
 )
 
 type Expression interface {
