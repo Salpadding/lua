@@ -12,5 +12,5 @@ const (
 	LuaNumberSize   = 8
 	LuaCInt         = 0x5678
 	LuaCNumber      = 370.5
-
 )
+

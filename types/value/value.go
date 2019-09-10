@@ -1,4 +1,4 @@
-package chunk
+package value
 
 import (
 	"bytes"
@@ -57,11 +57,4 @@ func (s String) String() string {
 	return common.Escape(bytes.NewBufferString(string(s)))
 }
 
-// UpValue = instack + idx
-type UpValue [2]byte
 
-type LocalVariable struct {
-	Name    string
-	StartPC uint32
-	EndPC   uint32
-}

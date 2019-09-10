@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/Salpadding/lua/types/value"
 	"io"
 	"math"
 
-	"github.com/Salpadding/lua/code/tag"
+	"github.com/Salpadding/lua/types/tag"
 )
 
 type Prototype struct {
@@ -17,13 +18,13 @@ type Prototype struct {
 	NumParams       byte
 	IsVararg        byte
 	MaxStackSize    byte
-	Code            []Instruction
-	Constants       []Value
+	Code            []value.Instruction
+	Constants       []value.Value
 	UpValues        []UpValue
 	Prototypes      []*Prototype
-	LineInfo        []uint32         // debug
+	LineInfo        []uint32               // debug
 	LocalVariables  []*LocalVariable // debug
-	UpvalueNames    []string         // debug
+	UpvalueNames    []string               // debug
 }
 
 type Chunk struct {
@@ -170,28 +171,28 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	return res, nil
 }
 
-func (b *ByteCodeReader) readCode() ([]Instruction, error) {
+func (b *ByteCodeReader) readCode() ([]value.Instruction, error) {
 	codes, err := b.ReadUint32()
 	if err != nil {
 		return nil, err
 	}
-	code := make([]Instruction, codes)
+	code := make([]value.Instruction, codes)
 	for i := range code {
 		c, err := b.ReadUint32()
 		if err != nil {
 			return nil, err
 		}
-		code[i] = Instruction(c)
+		code[i] = value.Instruction(c)
 	}
 	return code, nil
 }
 
-func (b *ByteCodeReader) readConstants() ([]Value, error) {
+func (b *ByteCodeReader) readConstants() ([]value.Value, error) {
 	size, err := b.ReadUint32()
 	if err != nil {
 		return nil, err
 	}
-	constants := make([]Value, size)
+	constants := make([]value.Value, size)
 	for i := range constants {
 		constants[i], err = b.readConstant()
 		if err != nil {
@@ -201,38 +202,38 @@ func (b *ByteCodeReader) readConstants() ([]Value, error) {
 	return constants, nil
 }
 
-func (b *ByteCodeReader) readConstant() (Value, error) {
+func (b *ByteCodeReader) readConstant() (value.Value, error) {
 	t, err := b.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 	switch t {
 	case tag.Nil:
-		return Nil("nil"), nil
+		return value.Nil("nil"), nil
 	case tag.Boolean:
 		n, err := b.ReadByte()
 		if err != nil {
 			return nil, err
 		}
-		return Boolean(n != 0), nil
+		return value.Boolean(n != 0), nil
 	case tag.Number:
 		i, err := b.ReadFloat()
 		if err != nil {
 			return nil, err
 		}
-		return Number(i), nil
+		return value.Number(i), nil
 	case tag.Integer:
 		i, err := b.ReadInt()
 		if err != nil {
 			return nil, err
 		}
-		return Integer(i), nil
+		return value.Integer(i), nil
 	case tag.ShortString, tag.LongString:
 		str, err := b.ReadString()
 		if err != nil {
 			return nil, err
 		}
-		return String(str), nil
+		return value.String(str), nil
 	default:
 		return nil, errors.New("unsupported constant type")
 	}
@@ -355,4 +356,13 @@ func (b *ByteCodeReader) readUpValueNames() ([]string, error) {
 		}
 	}
 	return names, nil
+}
+
+// UpValue = instack + idx
+type UpValue [2]byte
+
+type LocalVariable struct {
+	Name    string
+	StartPC uint32
+	EndPC   uint32
 }
