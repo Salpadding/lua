@@ -1,5 +1,10 @@
 package code
 
+const (
+	MaxArgBx  = 1<<18 - 1     // 2^18 - 1 = 262143
+	MaxArgsBx = MaxArgBx >> 1 // 262143 / 2 = 131071
+)
+
 type OpMode int
 
 /* OpMode */
@@ -139,4 +144,61 @@ var OpCodes = []*OpCode{
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABx /* */, Name: "CLOSURE "}, // R(A) := closure(KPROTO[Bx])
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "VARARG  "}, // R(A), R(A+1), ..., R(A+B-2) = vararg
 	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IAx /*  */, Name: "EXTRAARG"}, // extra (larger) argument for previous opcode
+}
+
+/*
+ 31       22       13       5    0
+  +-------+^------+-^-----+-^-----
+  |b=9bits |c=9bits |a=8bits|op=6|
+  +-------+^------+-^-----+-^-----
+  |    bx=18bits    |a=8bits|op=6|
+  +-------+^------+-^-----+-^-----
+  |   sbx=18bits    |a=8bits|op=6|
+  +-------+^------+-^-----+-^-----
+  |    ax=26bits            |op=6|
+  +-------+^------+-^-----+-^-----
+ 31      23      15       7      0
+*/
+type Instruction uint32
+
+func (ins Instruction) Opcode() *OpCode {
+	return OpCodes[ins&0x3f]
+}
+
+func (ins Instruction) OpName() string {
+	return ins.Opcode().Name
+}
+
+func (ins Instruction) OpMode() OpMode {
+	return ins.Opcode().OpMode
+}
+
+func (ins Instruction) ArgBMode() OpArgMask {
+	return ins.Opcode().ArgBMode
+}
+
+func (ins Instruction) ArgCMode() OpArgMask {
+	return ins.Opcode().ArgCMode
+}
+
+func (ins Instruction) ABC() (a, b, c int) {
+	a = int(ins >> 6 & 0xFF)
+	c = int(ins >> 14 & 0x1FF)
+	b = int(ins >> 23 & 0x1FF)
+	return
+}
+
+func (ins Instruction) ABx() (a, bx int) {
+	a = int(ins >> 6 & 0xFF)
+	bx = int(ins >> 14)
+	return
+}
+
+func (ins Instruction) AsBx() (a, sbx int) {
+	a, bx := ins.ABx()
+	return a, bx - MaxArgsBx
+}
+
+func (ins Instruction) Ax() int {
+	return int(ins >> 6)
 }
