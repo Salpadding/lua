@@ -3,9 +3,10 @@ package value
 import (
 	"bytes"
 	"fmt"
-	"github.com/Salpadding/lua/types/value/types"
 	"strconv"
 	"strings"
+
+	"github.com/Salpadding/lua/types/value/types"
 
 	"github.com/Salpadding/lua/common"
 )
@@ -19,6 +20,14 @@ type Value interface {
 	ToNumber() (Number, bool)
 	ToInteger() (Integer, bool)
 	ToString() (string, bool)
+}
+
+var (
+	luaNil = &Nil{}
+)
+
+func GetNil() *Nil {
+	return luaNil
 }
 
 type None string
@@ -45,7 +54,7 @@ func (n None) Type() types.Type {
 	return types.None
 }
 
-type Nil string
+type Nil struct{}
 
 func (n Nil) ToString() (string, bool) {
 	return "", false
@@ -54,7 +63,7 @@ func (n Nil) ToString() (string, bool) {
 func (n Nil) value() {}
 
 func (n Nil) String() string {
-	return string(n)
+	return "nil"
 }
 
 func (n Nil) Type() types.Type {
@@ -224,6 +233,14 @@ func (t *Table) String() string {
 
 func (t *Table) ToString() (string, bool) {
 	return "", false
+}
+
+func (t *Table) Set(k Value, v Value) error {
+	return nil
+}
+
+func (t *Table) Get(k Value) Value {
+	return nil
 }
 
 type Function struct {

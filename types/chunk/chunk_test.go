@@ -13,7 +13,7 @@ func Test(t *testing.T) {
 	err = (&ByteCodeReader{
 		Reader: f,
 	}).checkHeader()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 	}
 }
@@ -26,7 +26,7 @@ func Test2(t *testing.T) {
 	_, err = (&ByteCodeReader{
 		Reader: f,
 	}).Load()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 	}
 }

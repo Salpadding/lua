@@ -2,67 +2,68 @@ package vm
 
 import (
 	"fmt"
-	"github.com/Salpadding/lua/types/value"
 	"testing"
+
+	"github.com/Salpadding/lua/types/value"
 )
 
 func TestNewStack(t *testing.T) {
 	s := NewStack(1)
-	if err := s.Push(value.String("hello world")); err != nil{
+	if err := s.Push(value.String("hello world")); err != nil {
 		t.Error(err)
 	}
-	if err := s.Push(value.String("hello world")); err == nil{
+	if err := s.Push(value.String("hello world")); err == nil {
 		t.Fail()
 	}
 	v, err := s.Pop()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println(v)
 	_, err = s.Pop()
-	if err == nil{
+	if err == nil {
 		t.Fail()
 	}
 }
 
 func TestIndex(t *testing.T) {
 	s := NewStack(100)
-	if err := s.Push(value.String("hello world")); err != nil{
+	if err := s.Push(value.String("hello world")); err != nil {
 		t.Error(err)
 	}
 	idx := s.AbsIndex(-1)
-	if idx != 1{
+	if idx != 1 {
 		t.Fail()
 	}
 	v := s.Get(1)
 	_, ok := v.(value.Nil)
-	if ok{
+	if ok {
 		t.Fail()
 	}
-	if err := s.Set(1, value.Number(1.2)); err != nil{
+	if err := s.Set(1, value.Float(1.2)); err != nil {
 		t.Error(err)
 	}
 	v = s.Get(1)
 	_, ok = v.(value.Number)
-	if !ok{
+	if !ok {
 		t.Fail()
 	}
 }
 
 func TestCheck(t *testing.T) {
 	s := NewStack(1)
-	if err := s.Push(value.String("hello world")); err != nil{
+	if err := s.Push(value.String("hello world")); err != nil {
 		t.Error(err)
 	}
 	s.Check(4)
-	if len(s.slots) != 5{
+	if len(s.slots) != 5 {
 		t.Fail()
 	}
 	v := s.Get(1)
-	if v.(value.String) != "hello world"{
+	if v.(value.String) != "hello world" {
 		t.Fail()
 	}
-	if err := s.Push(value.String("hello world")); err != nil{
+	if err := s.Push(value.String("hello world")); err != nil {
 		t.Error(err)
 	}
 }

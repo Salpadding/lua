@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/Salpadding/lua/types/value"
 	"io"
 	"math"
+
+	"github.com/Salpadding/lua/types/value"
 
 	"github.com/Salpadding/lua/types/tag"
 )
@@ -22,9 +23,9 @@ type Prototype struct {
 	Constants       []value.Value
 	UpValues        []UpValue
 	Prototypes      []*Prototype
-	LineInfo        []uint32               // debug
+	LineInfo        []uint32         // debug
 	LocalVariables  []*LocalVariable // debug
-	UpvalueNames    []string               // debug
+	UpvalueNames    []string         // debug
 }
 
 type Chunk struct {
@@ -135,7 +136,7 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	if res.LineDefined, err = b.ReadUint32(); err != nil {
 		return nil, err
 	}
-	if res.LastLineDefined, err = b.ReadUint32(); err != nil{
+	if res.LastLineDefined, err = b.ReadUint32(); err != nil {
 		return nil, err
 	}
 	if res.NumParams, err = b.ReadByte(); err != nil {
@@ -209,7 +210,7 @@ func (b *ByteCodeReader) readConstant() (value.Value, error) {
 	}
 	switch t {
 	case tag.Nil:
-		return value.Nil("nil"), nil
+		return value.GetNil(), nil
 	case tag.Boolean:
 		n, err := b.ReadByte()
 		if err != nil {
@@ -221,7 +222,7 @@ func (b *ByteCodeReader) readConstant() (value.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		return value.Number(i), nil
+		return value.Float(i), nil
 	case tag.Integer:
 		i, err := b.ReadInt()
 		if err != nil {
@@ -240,7 +241,7 @@ func (b *ByteCodeReader) readConstant() (value.Value, error) {
 }
 
 func (b *ByteCodeReader) checkHeader() error {
-	if sig, err := b.ReadBytes(4); err != nil || ! bytes.Equal(sig, []byte(LuaSignature)) {
+	if sig, err := b.ReadBytes(4); err != nil || !bytes.Equal(sig, []byte(LuaSignature)) {
 		return errors.New("signature check fail")
 	}
 	if v, err := b.ReadByte(); err != nil || v != LuaVersion {

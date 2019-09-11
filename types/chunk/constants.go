@@ -13,4 +13,3 @@ const (
 	LuaCInt         = 0x5678
 	LuaCNumber      = 370.5
 )
-

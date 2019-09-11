@@ -3,8 +3,9 @@ package ast
 import (
 	"bytes"
 	"fmt"
-	"github.com/Salpadding/lua/common"
 	"strings"
+
+	"github.com/Salpadding/lua/common"
 )
 
 type Statement interface {
@@ -104,7 +105,7 @@ type LocalAssign struct {
 func (l *LocalAssign) statement() {}
 
 func (l *LocalAssign) String() string {
-	if len(l.Values) == 0{
+	if len(l.Values) == 0 {
 		return fmt.Sprintf("local %s", common.JoinComma(l.Identifiers))
 	}
 	return fmt.Sprintf("local %s = %s", common.JoinComma(l.Identifiers), common.JoinComma(l.Values))

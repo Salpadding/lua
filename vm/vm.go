@@ -2,6 +2,8 @@ package vm
 
 import (
 	"errors"
+
+	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
 )
@@ -16,64 +18,66 @@ const (
 	LuaRelease = LuaVersion + "." + LuaVersionRelease
 )
 
-// State is lua state api implementation
-type State struct {
+// LuaVM is lua state api implementation
+type LuaVM struct {
 	*Stack
+	proto *chunk.Prototype
+	pc    int
 }
 
-func (s *State) Close() {}
+func (vm *LuaVM) Close() {}
 
-func (s *State) GetTop() int {
-	return s.Stack.top
+func (vm *LuaVM) GetTop() int {
+	return vm.Stack.top
 }
 
-func (s *State) CheckStack(i int) {
-	s.Stack.Check(i)
+func (vm *LuaVM) CheckStack(i int) {
+	vm.Stack.Check(i)
 }
 
-func (s *State) Pop(n int) ([]value.Value, error) {
-	return s.Stack.PopN(n)
+func (vm *LuaVM) Pop(n int) ([]value.Value, error) {
+	return vm.Stack.PopN(n)
 }
 
-func (s *State) Copy(dst, src int) error {
-	return s.Set(dst, s.Get(src))
+func (vm *LuaVM) Copy(dst, src int) error {
+	return vm.Set(dst, vm.Get(src))
 }
 
-func (s *State) PushValue(idx int) error {
-	return s.Push(s.Get(idx))
+func (vm *LuaVM) PushValue(idx int) error {
+	return vm.Push(vm.Get(idx))
 }
 
-func (s *State) Replace(idx int) error {
-	v, err := s.Stack.Pop()
+func (vm *LuaVM) Replace(idx int) error {
+	v, err := vm.Stack.Pop()
 	if err != nil {
 		return err
 	}
-	return s.Set(idx, v)
+	return vm.Set(idx, v)
 }
 
-func (s *State) Insert(idx int) error {
-	return s.Rotate(idx, 1)
+func (vm *LuaVM) Insert(idx int) error {
+	return vm.Rotate(idx, 1)
 }
 
-func (s *State) Remove(idx int) error {
-	if err := s.Rotate(idx, -1); err != nil {
+func (vm *LuaVM) Remove(idx int) error {
+	if err := vm.Rotate(idx, -1); err != nil {
 		return err
 	}
-	if _, err := s.Pop(1); err != nil {
+	if _, err := vm.Pop(1); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *State) SetTop(idx int) error {
-	newTop := s.Stack.AbsIndex(idx)
+func (vm *LuaVM) SetTop(idx int) error {
+	newTop := vm.Stack.AbsIndex(idx)
 	if newTop < 0 {
 		return errors.New("stack underflow")
 	}
 
-	n := s.Stack.top - newTop
+	n := vm.Stack.top - newTop
 	if n > 0 {
-		_, err := s.Stack.PopN(n)
+		_, err := vm.Stack.PopN(n)
 		if err != nil {
 			return err
 		}
@@ -81,7 +85,7 @@ func (s *State) SetTop(idx int) error {
 	}
 	if n < 0 {
 		for i := 0; i > n; i-- {
-			if err := s.Stack.Push(value.Nil("nil")); err != nil {
+			if err := vm.Stack.Push(value.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -89,33 +93,33 @@ func (s *State) SetTop(idx int) error {
 	return nil
 }
 
-func (s *State) TypeName(v value.Value) string {
+func (vm *LuaVM) TypeName(v value.Value) string {
 	return v.Type().String()
 }
 
-func (s *State) Type(idx int) types.Type {
-	if !s.IsValid(idx) {
+func (vm *LuaVM) Type(idx int) types.Type {
+	if !vm.IsValid(idx) {
 		return types.None
 	}
-	return s.Get(idx).Type()
+	return vm.Get(idx).Type()
 }
 
-func (s *State) Rotate(idx, n int) error {
-	t := s.Stack.top - 1           /* end of stack segment being rotated */
-	p := s.Stack.AbsIndex(idx) - 1 /* start of segment */
-	var m int                      /* end of prefix */
+func (vm *LuaVM) Rotate(idx, n int) error {
+	t := vm.Stack.top - 1           /* end of stack segment being rotated */
+	p := vm.Stack.AbsIndex(idx) - 1 /* start of segment */
+	var m int                       /* end of prefix */
 	if n >= 0 {
 		m = t - n
 	} else {
 		m = p - n - 1
 	}
-	if err := s.Stack.reverse(p, m); err != nil {
+	if err := vm.Stack.reverse(p, m); err != nil {
 		return err
 	} /* reverse the prefix with length 'n' */
-	if err := s.Stack.reverse(m+1, t); err != nil {
+	if err := vm.Stack.reverse(m+1, t); err != nil {
 		return err
 	} /* reverse the suffix */
-	if err := s.Stack.reverse(p, t); err != nil {
+	if err := vm.Stack.reverse(p, t); err != nil {
 		return err
 	} /* reverse the entire segment */
 	return nil
@@ -137,6 +141,10 @@ func (s *Stack) Push(val value.Value) error {
 	return nil
 }
 
+func (s *Stack) PushNil() error {
+	return s.Push(value.GetNil())
+}
+
 func (s *Stack) Pop() (value.Value, error) {
 	if s.top == 0 {
 		return nil, errors.New("stack underflow")
@@ -151,7 +159,7 @@ func (s *Stack) PushN(values []value.Value, n int) error {
 	}
 	for i := 0; i < n; i++ {
 		if i >= len(values) {
-			if err := s.Push(value.Nil("nil")); err != nil {
+			if err := s.Push(value.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -211,7 +219,7 @@ func (s *Stack) Get(idx int) value.Value {
 	if s.IsValid(idx) {
 		return s.slots[idx-1]
 	}
-	return value.Nil("nil")
+	return value.GetNil()
 }
 
 func (s *Stack) Set(idx int, val value.Value) error {
@@ -233,4 +241,5 @@ func (s *Stack) reverse(from, to int) error {
 		from++
 		to--
 	}
+	return nil
 }
