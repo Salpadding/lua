@@ -27,5 +27,8 @@ func (ins *Instruction) loadNil(vm *LuaVM) error {
 			return err
 		}
 	}
+	if _, err := vm.Stack.Pop(); err != nil {
+		return err
+	}
 	return nil
 }
