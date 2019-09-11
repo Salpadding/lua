@@ -3,6 +3,7 @@ package vm
 import (
 	"errors"
 	"github.com/Salpadding/lua/types/value"
+	"github.com/Salpadding/lua/types/value/types"
 )
 
 const (
@@ -92,6 +93,13 @@ func (s *State) TypeName(v value.Value) string {
 	return v.Type().String()
 }
 
+func (s *State) Type(idx int) types.Type {
+	if !s.IsValid(idx) {
+		return types.None
+	}
+	return s.Get(idx).Type()
+}
+
 func (s *State) Rotate(idx, n int) error {
 	t := s.Stack.top - 1           /* end of stack segment being rotated */
 	p := s.Stack.AbsIndex(idx) - 1 /* start of segment */
@@ -110,6 +118,7 @@ func (s *State) Rotate(idx, n int) error {
 	if err := s.Stack.reverse(p, t); err != nil {
 		return err
 	} /* reverse the entire segment */
+	return nil
 }
 
 type Stack struct {
