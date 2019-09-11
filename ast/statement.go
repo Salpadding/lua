@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"fmt"
+	"github.com/Salpadding/lua/common"
 	"strings"
 )
 
@@ -19,11 +20,11 @@ type Block struct {
 func (b Block) statement() {}
 
 func (b *Block) String() string {
-	g := toGeneral(b.Statements)
+	g := common.ToGeneral(b.Statements)
 	if b.Return != nil {
 		g = append(g, b.Return)
 	}
-	return join(g, "\n")
+	return common.Join(g, "\n")
 }
 
 // ;
@@ -81,7 +82,7 @@ type While struct {
 func (w *While) statement() {}
 
 func (w *While) String() string {
-	return fmt.Sprintf("while %s do\n%s\nend", w.Condition.String(), indent(2, w.Body.String()))
+	return fmt.Sprintf("while %s do\n%s\nend", w.Condition.String(), common.Indent(2, w.Body.String()))
 }
 
 type Repeat struct {
@@ -104,9 +105,9 @@ func (l *LocalAssign) statement() {}
 
 func (l *LocalAssign) String() string {
 	if len(l.Values) == 0{
-		return fmt.Sprintf("local %s", joinComma(l.Identifiers))
+		return fmt.Sprintf("local %s", common.JoinComma(l.Identifiers))
 	}
-	return fmt.Sprintf("local %s = %s", joinComma(l.Identifiers), joinComma(l.Values))
+	return fmt.Sprintf("local %s = %s", common.JoinComma(l.Identifiers), common.JoinComma(l.Values))
 }
 
 type Assign struct {
@@ -117,7 +118,7 @@ type Assign struct {
 func (a *Assign) statement() {}
 
 func (a *Assign) String() string {
-	return fmt.Sprintf("%s = %s", joinComma(a.Vars), joinComma(a.Values))
+	return fmt.Sprintf("%s = %s", common.JoinComma(a.Vars), common.JoinComma(a.Values))
 }
 
 type Function struct {
@@ -131,7 +132,7 @@ func (f *Function) expression() {}
 func (f *Function) statement() {}
 
 func (f *Function) String() string {
-	return fmt.Sprintf("function %s (%s)\n%s\nend\n", f.Name, joinComma(f.Parameters), indent(2, f.Body.String()))
+	return fmt.Sprintf("function %s (%s)\n%s\nend\n", f.Name, common.JoinComma(f.Parameters), common.Indent(2, f.Body.String()))
 }
 
 type LocalFunction struct {
@@ -152,15 +153,15 @@ type If struct {
 func (i *If) statement() {}
 
 func (i *If) String() string {
-	cons := fmt.Sprintf("if %s then\n%s\n", i.Consequence.Condition.String(), indent(2, i.Consequence.Body.String()))
+	cons := fmt.Sprintf("if %s then\n%s\n", i.Consequence.Condition.String(), common.Indent(2, i.Consequence.Body.String()))
 	buf := bytes.NewBufferString(cons)
 	if i.Alternatives != nil {
 		for _, a := range i.Alternatives {
-			buf.WriteString(fmt.Sprintf("elseif %s then\n%s\n", a.Condition.String(), indent(2, a.Body.String())))
+			buf.WriteString(fmt.Sprintf("elseif %s then\n%s\n", a.Condition.String(), common.Indent(2, a.Body.String())))
 		}
 	}
 	if i.Else != nil {
-		buf.WriteString(fmt.Sprintf("else\n%s\n", indent(2, i.Else.String())))
+		buf.WriteString(fmt.Sprintf("else\n%s\n", common.Indent(2, i.Else.String())))
 	}
 	buf.WriteString("end")
 	return buf.String()
@@ -183,7 +184,7 @@ func (f *For) String() string {
 		buf.WriteString(f.Step.String())
 	}
 	buf.WriteString(" do\n")
-	buf.WriteString(indent(2, f.Body.String()))
+	buf.WriteString(common.Indent(2, f.Body.String()))
 	buf.WriteString("\nend")
 	return buf.String()
 }
@@ -197,5 +198,5 @@ type ForIn struct {
 func (f *ForIn) statement() {}
 
 func (f *ForIn) String() string {
-	return fmt.Sprintf("for %s in %s do\n%s\nend", joinComma(f.NameList), joinComma(f.Expressions), indent(2, f.Body.String()))
+	return fmt.Sprintf("for %s in %s do\n%s\nend", common.JoinComma(f.NameList), common.JoinComma(f.Expressions), common.Indent(2, f.Body.String()))
 }

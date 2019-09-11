@@ -139,7 +139,7 @@ type Table []*Keypair
 func (tb Table) expression() {}
 
 func (tb Table) String() string {
-	return fmt.Sprintf("{ %s }", joinComma(tb))
+	return fmt.Sprintf("{ %s }", common.JoinComma(tb))
 }
 
 func (tb Table) arguments() {}

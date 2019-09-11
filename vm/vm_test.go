@@ -8,19 +8,61 @@ import (
 
 func TestNewStack(t *testing.T) {
 	s := NewStack(1)
-	if err := s.push(value.String("hello world")); err != nil{
+	if err := s.Push(value.String("hello world")); err != nil{
 		t.Error(err)
 	}
-	if err := s.push(value.String("hello world")); err == nil{
+	if err := s.Push(value.String("hello world")); err == nil{
 		t.Fail()
 	}
-	v, err := s.pop()
+	v, err := s.Pop()
 	if err != nil{
 		t.Error(err)
 	}
 	fmt.Println(v)
-	_, err = s.pop()
+	_, err = s.Pop()
 	if err == nil{
 		t.Fail()
+	}
+}
+
+func TestIndex(t *testing.T) {
+	s := NewStack(100)
+	if err := s.Push(value.String("hello world")); err != nil{
+		t.Error(err)
+	}
+	idx := s.AbsIndex(-1)
+	if idx != 1{
+		t.Fail()
+	}
+	v := s.Get(1)
+	_, ok := v.(value.Nil)
+	if ok{
+		t.Fail()
+	}
+	if err := s.Set(1, value.Number(1.2)); err != nil{
+		t.Error(err)
+	}
+	v = s.Get(1)
+	_, ok = v.(value.Number)
+	if !ok{
+		t.Fail()
+	}
+}
+
+func TestCheck(t *testing.T) {
+	s := NewStack(1)
+	if err := s.Push(value.String("hello world")); err != nil{
+		t.Error(err)
+	}
+	s.Check(4)
+	if len(s.slots) != 5{
+		t.Fail()
+	}
+	v := s.Get(1)
+	if v.(value.String) != "hello world"{
+		t.Fail()
+	}
+	if err := s.Push(value.String("hello world")); err != nil{
+		t.Error(err)
 	}
 }
