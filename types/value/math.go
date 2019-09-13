@@ -66,3 +66,32 @@ func Add(a, b Value) (Value, bool) {
 	}
 	return af + bf, true
 }
+
+
+func Sub(a, b Value) (Value, bool){
+	ai, ok := a.(Integer)
+	bi, ok2 := b.(Integer)
+	if ok && ok2{
+		return ai - bi, true
+	}
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2{
+		return nil, false
+	}
+	return af - bf, true
+}
+
+func Mul(a, b Value) (Value, bool){
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2{
+		return ai * bi, true
+	}
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2{
+		return nil, false
+	}
+	return af * bf, true
+}
