@@ -19,62 +19,85 @@ type Value interface {
 	Type() types.Type
 	ToNumber() (Number, bool)
 	ToInteger() (Integer, bool)
+	ToFloat() (Float, bool)
 	ToString() (string, bool)
+	ToBoolean() Boolean
 }
 
 var (
-	luaNil = &Nil{}
+	luaNil  = &Nil{}
+	luaNone = &None{}
 )
 
 func GetNil() *Nil {
 	return luaNil
 }
 
-type None string
+func GetNone() *None {
+	return luaNone
+}
 
-func (n None) ToString() (string, bool) {
+type None struct{}
+
+func (n *None) ToString() (string, bool) {
 	return "", false
 }
 
-func (n None) value() {}
+func (n *None) value() {}
 
-func (n None) String() string {
-	return string(n)
+func (n *None) String() string {
+	return "none"
 }
 
-func (n None) ToNumber() (Number, bool) {
+func (n *None) ToNumber() (Number, bool) {
 	return nil, false
 }
 
-func (n None) ToInteger() (Integer, bool) {
+func (n *None) ToInteger() (Integer, bool) {
 	return 0, false
 }
 
-func (n None) Type() types.Type {
+func (n *None) Type() types.Type {
 	return types.None
+}
+
+func (n *None) ToBoolean() Boolean {
+	return false
+}
+
+func (n *None) ToFloat() (Float, bool) {
+	return 0, false
 }
 
 type Nil struct{}
 
-func (n Nil) ToString() (string, bool) {
+func (n *Nil) ToString() (string, bool) {
 	return "", false
 }
 
-func (n Nil) value() {}
+func (n *Nil) value() {}
 
-func (n Nil) String() string {
+func (n *Nil) String() string {
 	return "nil"
 }
 
-func (n Nil) Type() types.Type {
+func (n *Nil) Type() types.Type {
 	return types.Nil
 }
 
-func (n Nil) ToNumber() (Number, bool) {
+func (n *Nil) ToNumber() (Number, bool) {
 	return nil, false
 }
 
-func (n Nil) ToInteger() (Integer, bool) {
+func (n *Nil) ToInteger() (Integer, bool) {
+	return 0, false
+}
+
+func (n *Nil) ToBoolean() Boolean {
+	return false
+}
+
+func (n *Nil) ToFloat() (Float, bool) {
 	return 0, false
 }
 
@@ -102,6 +125,14 @@ func (b Boolean) ToNumber() (Number, bool) {
 }
 
 func (b Boolean) ToInteger() (Integer, bool) {
+	return 0, false
+}
+
+func (b Boolean) ToBoolean() Boolean {
+	return b
+}
+
+func (b Boolean) ToFloat() (Float, bool) {
 	return 0, false
 }
 
@@ -140,6 +171,14 @@ func (n Float) ToInteger() (Integer, bool) {
 	return Integer(i), Float(i) == n
 }
 
+func (n Float) ToBoolean() Boolean {
+	return true
+}
+
+func (n Float) ToFloat() (Float, bool) {
+	return n, true
+}
+
 type Integer int64
 
 func (i Integer) ToString() (string, bool) {
@@ -149,7 +188,7 @@ func (i Integer) ToString() (string, bool) {
 func (i Integer) value() {}
 
 func (i Integer) String() string {
-	return strconv.FormatInt(int64(i), 64)
+	return strconv.FormatInt(int64(i), 10)
 }
 
 func (i Integer) Type() types.Type {
@@ -168,6 +207,14 @@ func (i Integer) ToInteger() (Integer, bool) {
 	return i, true
 }
 
+func (i Integer) ToBoolean() Boolean {
+	return true
+}
+
+func (i Integer) ToFloat() (Float, bool) {
+	return Float(i), true
+}
+
 type String string
 
 func (s String) ToString() (string, bool) {
@@ -177,7 +224,7 @@ func (s String) ToString() (string, bool) {
 func (s String) value() {}
 
 func (s String) String() string {
-	return common.Escape(bytes.NewBufferString(string(s)))
+	return "\"" + common.Escape(bytes.NewBufferString(string(s))) + "\""
 }
 
 func (s String) Type() types.Type {
@@ -196,6 +243,18 @@ func (s String) ToInteger() (Integer, bool) {
 		return Integer(f), float64(Integer(f)) == f
 	}
 	return 0, false
+}
+
+func (s String) ToBoolean() Boolean {
+	return true
+}
+
+func (s String) ToFloat() (Float, bool) {
+	f, ok := ParseFloat(string(s))
+	if !ok {
+		return 0, ok
+	}
+	return Float(f), true
 }
 
 type Table struct {
@@ -235,6 +294,14 @@ func (t *Table) ToString() (string, bool) {
 	return "", false
 }
 
+func (t *Table) ToBoolean() Boolean {
+	return true
+}
+
+func(t *Table) ToFloat() (Float, bool){
+	return 0, false
+}
+
 func (t *Table) Set(k Value, v Value) error {
 	return nil
 }
@@ -266,6 +333,10 @@ func (f *Function) Type() types.Type {
 	return types.Function
 }
 
+func (f *Function) ToBoolean() Boolean {
+	return true
+}
+
 type Thread func()
 
 func (t Thread) ToString() (string, bool) {
@@ -286,4 +357,8 @@ func (t Thread) String() string { return "thread" }
 
 func (t Thread) Type() types.Type {
 	return types.Thread
+}
+
+func (t Thread) ToBoolean() Boolean {
+	return true
 }

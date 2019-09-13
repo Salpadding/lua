@@ -36,7 +36,7 @@ func TestIndex(t *testing.T) {
 		t.Fail()
 	}
 	v := s.Get(1)
-	_, ok := v.(value.Nil)
+	_, ok := v.(*value.Nil)
 	if ok {
 		t.Fail()
 	}
@@ -66,4 +66,44 @@ func TestCheck(t *testing.T) {
 	if err := s.Push(value.String("hello world")); err != nil {
 		t.Error(err)
 	}
+}
+
+func TestStack(t *testing.T) {
+	s := &LuaVM{Stack: NewStack(256)}
+	if err := s.Push(value.Boolean(true)); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Push(value.Integer(10)); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Push(value.GetNil()); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Push(value.String("hello")); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Push(value.Integer(-4)); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Replace(3); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.SetTop(6); err != nil{
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.Remove(-3); err != nil{
+		t.Error(err)
+	}
+	fmt.Println(s)
+	if err := s.SetTop(-5); err != nil{
+		t.Error(err)
+	}
+	fmt.Println(s)
 }
