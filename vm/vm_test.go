@@ -121,4 +121,8 @@ func TestArithmetic(t *testing.T) {
 	fmt.Println(s)
 	assert.NoError(t, s.Arithmetic(types.BitwiseNot))
 	fmt.Println(s)
+	assert.NoError(t, s.Len(2))
+	fmt.Println(s)
+	assert.NoError(t, s.Concat(3))
+	fmt.Println(s)
 }

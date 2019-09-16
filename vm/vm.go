@@ -182,3 +182,35 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 	}
 	return errInvalidOperand
 }
+
+func (vm *LuaVM) Len(idx int) error {
+	val := vm.Get(idx)
+	v, ok := value.Len(val)
+	if !ok {
+		return errInvalidOperand
+	}
+	return vm.Push(v)
+}
+
+func (vm *LuaVM) Concat(n int) error {
+	if n == 0 {
+		return vm.Push(value.String(""))
+	}
+	if n == 1 {
+		return nil
+	}
+	for i := 1; i < n; i ++{
+		s2, ok := vm.Get(-1).ToString()
+		s1, ok2 := vm.Get(-2).ToString()
+		if !ok || !ok2{
+			return errInvalidOperand
+		}
+		if _, err := vm.PopN(2); err != nil{
+			return err
+		}
+		if err := vm.Push(value.String(s1 + s2)); err != nil{
+			return err
+		}
+	}
+	return nil
+}
