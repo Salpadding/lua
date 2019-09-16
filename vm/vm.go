@@ -2,6 +2,7 @@ package vm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/code"
@@ -239,4 +240,19 @@ func (vm *LuaVM) GetRK(rk int) error {
 		return vm.GetConst(rk)
 	}
 	return vm.Push(value.Integer(rk + 1))
+}
+
+func(vm *LuaVM) execute() error{
+	vm.Stack = NewStack(int(vm.proto.MaxStackSize))
+	for{
+		ins := &Instruction{Instruction: vm.proto.Code[vm.pc]}
+		if ins.Opcode().Type == code.RETURN{
+			break
+		}
+		if err := ins.execute(vm); err != nil{
+			return err
+		}
+		fmt.Println(vm)
+	}
+	return nil
 }

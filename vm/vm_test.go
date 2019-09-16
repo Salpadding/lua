@@ -2,8 +2,10 @@ package vm
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
+	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
 	"github.com/stretchr/testify/assert"
@@ -125,4 +127,16 @@ func TestArithmetic(t *testing.T) {
 	fmt.Println(s)
 	assert.NoError(t, s.Concat(3))
 	fmt.Println(s)
+}
+
+func TestBin(t *testing.T) {
+	f, err := os.Open("testdata/luac.out")
+	assert.NoError(t, err)
+	proto, err := chunk.ReadPrototype(f)
+	assert.NoError(t, err)
+	vm := &LuaVM{
+		proto: proto,
+		pc:    0,
+	}
+	assert.NoError(t, vm.execute())
 }

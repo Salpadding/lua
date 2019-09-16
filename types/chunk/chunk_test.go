@@ -3,6 +3,8 @@ package chunk
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test(t *testing.T) {
@@ -23,10 +25,13 @@ func Test2(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = (&ByteCodeReader{
+	proto, err := (&ByteCodeReader{
 		Reader: f,
 	}).Load()
 	if err != nil {
 		t.Error(err)
 	}
+	assert.NotNil(t, proto)
 }
+
+
