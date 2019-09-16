@@ -11,10 +11,9 @@ import (
 	"github.com/Salpadding/lua/common"
 )
 
-type Instruction uint32
-
 type Value interface {
 	value()
+	// String is stringer for debug
 	String() string
 	Type() types.Type
 	ToNumber() (Number, bool)

@@ -214,3 +214,21 @@ func (vm *LuaVM) Concat(n int) error {
 	}
 	return nil
 }
+
+func(vm *LuaVM) AddPC(i int){
+	vm.pc += i
+}
+
+func(vm *LuaVM) GetConst(idx int) error{
+	if idx < 0 || idx >= len(vm.proto.Constants){
+		return errIndexOverFlow
+	}
+	v := vm.proto.Constants[idx]
+	return vm.Push(v)
+}
+
+func (vm *LuaVM) Fetch() chunk.Instruction {
+	i := vm.proto.Code[vm.pc]
+	vm.pc++
+	return i
+}

@@ -3,7 +3,7 @@ package types
 type Type int
 
 const (
-	None = iota
+	None Type = iota
 	Nil
 	Boolean
 	Number

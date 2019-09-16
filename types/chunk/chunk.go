@@ -19,7 +19,7 @@ type Prototype struct {
 	NumParams       byte
 	IsVararg        byte
 	MaxStackSize    byte
-	Code            []value.Instruction
+	Code            []Instruction
 	Constants       []value.Value
 	UpValues        []UpValue
 	Prototypes      []*Prototype
@@ -172,18 +172,18 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	return res, nil
 }
 
-func (b *ByteCodeReader) readCode() ([]value.Instruction, error) {
+func (b *ByteCodeReader) readCode() ([]Instruction, error) {
 	codes, err := b.ReadUint32()
 	if err != nil {
 		return nil, err
 	}
-	code := make([]value.Instruction, codes)
+	code := make([]Instruction, codes)
 	for i := range code {
 		c, err := b.ReadUint32()
 		if err != nil {
 			return nil, err
 		}
-		code[i] = value.Instruction(c)
+		code[i] = Instruction(c)
 	}
 	return code, nil
 }
@@ -367,3 +367,6 @@ type LocalVariable struct {
 	StartPC uint32
 	EndPC   uint32
 }
+
+type Instruction uint32
+
