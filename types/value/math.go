@@ -134,19 +134,29 @@ func sigMod(f Float) int {
 	return 0
 }
 
-func Compare(a, b Value) (int, bool) {
+func toComparison(i int) types.Comparison {
+	if i < 0 {
+		return types.LessThan
+	}
+	if i > 0 {
+		return types.GreaterThan
+	}
+	return types.Equal
+}
+
+func Compare(a, b Value) (types.Comparison, bool) {
 	switch x := a.(type) {
 	case String:
 		bs, ok := b.(String)
 		if ok {
-			return strings.Compare(string(x), string(bs)), true
+			return toComparison(strings.Compare(string(x), string(bs))), true
 		}
 	case Integer:
 		switch y := b.(type) {
 		case Integer:
-			return int(x - y), true
+			return toComparison(int(x - y)), true
 		case Float:
-			return sigMod(Float(x) - y), true
+			return toComparison(sigMod(Float(x) - y)), true
 		}
 	case Float:
 		switch y := b.(type) {
@@ -154,7 +164,7 @@ func Compare(a, b Value) (int, bool) {
 			res, ok := Compare(b, a)
 			return -res, ok
 		case Float:
-			return sigMod(x - y), true
+			return toComparison(sigMod(x - y)), true
 		}
 	}
 	return 0, false
@@ -247,8 +257,12 @@ func equal(a, b Value) bool {
 	}
 }
 
-func Equal(a, b Value) (Value, bool) {
-	return Boolean(equal(a, b)), true
+func Equal(a, b Value) (types.Comparison, bool) {
+	ok := equal(a, b)
+	if ok {
+		return types.Equal, true
+	}
+	return 0, true
 }
 
 func Len(a Value) (Value, bool) {
