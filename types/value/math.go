@@ -229,7 +229,7 @@ func BitwiseOr(a, b Value) (Value, bool) {
 	return nil, false
 }
 
-func Equal(a, b Value) bool {
+func equal(a, b Value) bool {
 	switch x := a.(type) {
 	case *Nil:
 		return b.Type() == types.Nil
@@ -245,4 +245,16 @@ func Equal(a, b Value) bool {
 	default:
 		return a == b
 	}
+}
+
+func Equal(a, b Value) (Value, bool) {
+	return Boolean(equal(a, b)), true
+}
+
+func Len(a Value) (Value, bool) {
+	switch x := a.(type) {
+	case String:
+		return Integer(len(x)), true
+	}
+	return nil, false
 }
