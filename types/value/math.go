@@ -67,31 +67,70 @@ func Add(a, b Value) (Value, bool) {
 	return af + bf, true
 }
 
-
-func Sub(a, b Value) (Value, bool){
+func Sub(a, b Value) (Value, bool) {
 	ai, ok := a.(Integer)
 	bi, ok2 := b.(Integer)
-	if ok && ok2{
+	if ok && ok2 {
 		return ai - bi, true
 	}
 	af, ok := a.ToFloat()
 	bf, ok2 := b.ToFloat()
-	if !ok || !ok2{
+	if !ok || !ok2 {
 		return nil, false
 	}
 	return af - bf, true
 }
 
-func Mul(a, b Value) (Value, bool){
+func Mul(a, b Value) (Value, bool) {
 	ai, ok := a.(Integer)
 	bi, ok2 := a.(Integer)
-	if ok && ok2{
+	if ok && ok2 {
 		return ai * bi, true
 	}
 	af, ok := a.ToFloat()
 	bf, ok2 := b.ToFloat()
-	if !ok || !ok2{
+	if !ok || !ok2 {
 		return nil, false
 	}
 	return af * bf, true
+}
+
+func Mod(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2 {
+		return IMod(ai, bi), true
+	}
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2 {
+		return nil, false
+	}
+	return FMod(af, bf), true
+}
+
+func IDiv(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2 {
+		return IFloorDiv(ai, bi), true
+	}
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2 {
+		return nil, false
+	}
+	return FFloorDiv(af, bf), true
+}
+
+func Negative(a Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	if ok {
+		return -ai, true
+	}
+	af, ok := a.ToFloat()
+	if ok {
+		return -af, true
+	}
+	return nil, false
 }
