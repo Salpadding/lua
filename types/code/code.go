@@ -30,12 +30,11 @@ type Type int
 
 /* OpCode */
 const (
-	Unknown Type = iota
-	MOVE
-	LOADK
-	LOADKX
-	LOADBOOL
-	LOADNIL
+	Move Type = iota
+	LoadK
+	LoadKX
+	LoadBool
+	LoadNil
 	GETUPVAL
 	GETTABUP
 	GETTABLE
@@ -44,34 +43,34 @@ const (
 	SETTABLE
 	NEWTABLE
 	SELF
-	ADD
-	SUB
-	MUL
-	MOD
-	POW
-	DIV
-	IDIV
-	BAND
-	BOR
-	BXOR
-	SHL
-	SHR
-	UNM
-	BNOT
-	NOT
-	LEN
-	CONCAT
-	JMP
-	EQ
-	LT
-	LE
-	TEST
-	TESTSET
+	Add
+	Sub
+	Mul
+	Mod
+	Pow
+	Div
+	IDiv
+	BitwiseAnd
+	BitwiseOr
+	BitwiseXor
+	ShiftLeft
+	ShiftRight
+	UnaryMinus
+	BitwiseNot
+	LogicalNot
+	Len
+	Concat
+	Jmp
+	Equal
+	LessThan
+	LessThanOrEqual
+	Test
+	TestSet
 	CALL
 	TAILCALL
-	RETURN
-	FORLOOP
-	FORPREP
+	Return
+	ForLoop
+	ForPrep
 	TFORCALL
 	TFORLOOP
 	SETLIST
@@ -98,11 +97,11 @@ type OpCode struct {
 
 var OpCodes = []*OpCode{
 	/*     T  A    B       C     mode         name       action */
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "MOVE    "}, // R(A) := R(B)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgN, OpMode: IABx /* */, Name: "LOADK   "}, // R(A) := Kst(Bx)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgN, ArgCMode: OpArgN, OpMode: IABx /* */, Name: "LOADKX  "}, // R(A) := Kst(extra arg)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "LOADBOOL"}, // R(A) := (bool)B; if (C) pc++
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "LOADNIL "}, // R(A), R(A+1), ..., R(A+B) := nil
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "Move    "}, // R(A) := R(B)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgN, OpMode: IABx /* */, Name: "LoadK   "}, // R(A) := Kst(Bx)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgN, ArgCMode: OpArgN, OpMode: IABx /* */, Name: "LoadKX  "}, // R(A) := Kst(extra arg)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "LoadBool"}, // R(A) := (bool)B; if (C) pc++
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "LoadNil "}, // R(A), R(A+1), ..., R(A+B) := nil
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "GETUPVAL"}, // R(A) := UpValue[B]
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "GETTABUP"}, // R(A) := UpValue[B][RK(C)]
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "GETTABLE"}, // R(A) := R(B)[RK(C)]
@@ -111,34 +110,34 @@ var OpCodes = []*OpCode{
 	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "SETTABLE"}, // R(A)[RK(B)] := RK(C)
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "NEWTABLE"}, // R(A) := {} (size = B,C)
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "SELF    "}, // R(A+1) := R(B); R(A) := R(B)[RK(C)]
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "ADD     "}, // R(A) := RK(B) + RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "SUB     "}, // R(A) := RK(B) - RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "MUL     "}, // R(A) := RK(B) * RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "MOD     "}, // R(A) := RK(B) % RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "POW     "}, // R(A) := RK(B) ^ RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "DIV     "}, // R(A) := RK(B) / RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "IDIV    "}, // R(A) := RK(B) // RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BAND    "}, // R(A) := RK(B) & RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BOR     "}, // R(A) := RK(B) | RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BXOR    "}, // R(A) := RK(B) ~ RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "SHL     "}, // R(A) := RK(B) << RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "SHR     "}, // R(A) := RK(B) >> RK(C)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "UNM     "}, // R(A) := -R(B)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "BNOT    "}, // R(A) := ~R(B)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "NOT     "}, // R(A) := not R(B)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "LEN     "}, // R(A) := length of R(B)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgR, OpMode: IABC /* */, Name: "CONCAT  "}, // R(A) := R(B).. ... ..R(C)
-	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "JMP     "}, // pc+=sBx; if (A) close all upvalues >= R(A - 1)
-	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "EQ      "}, // if ((RK(B) == RK(C)) ~= A) then pc++
-	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "LT      "}, // if ((RK(B) <  RK(C)) ~= A) then pc++
-	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "LE      "}, // if ((RK(B) <= RK(C)) ~= A) then pc++
-	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgN, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "TEST    "}, // if not (R(A) <=> C) then pc++
-	{TestFlag: 1, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "TESTSET "}, // if (R(B) <=> C) then R(A) := R(B) else pc++
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Add     "}, // R(A) := RK(B) + RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Sub     "}, // R(A) := RK(B) - RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Mul     "}, // R(A) := RK(B) * RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Mod     "}, // R(A) := RK(B) % RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Pow     "}, // R(A) := RK(B) ^ RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Div     "}, // R(A) := RK(B) / RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "IDiv    "}, // R(A) := RK(B) // RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BitwiseAnd    "}, // R(A) := RK(B) & RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BitwiseOr     "}, // R(A) := RK(B) | RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "BitwiseXor    "}, // R(A) := RK(B) ~ RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "ShiftLeft     "}, // R(A) := RK(B) << RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "ShiftRight     "}, // R(A) := RK(B) >> RK(C)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "UnaryMinus     "}, // R(A) := -R(B)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "BitwiseNot    "}, // R(A) := ~R(B)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "LogicalNot     "}, // R(A) := not R(B)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "Len     "}, // R(A) := length of R(B)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgR, OpMode: IABC /* */, Name: "Concat  "}, // R(A) := R(B).. ... ..R(C)
+	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "Jmp     "}, // pc+=sBx; if (A) close all upvalues >= R(A - 1)
+	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "Equal      "}, // if ((RK(B) == RK(C)) ~= A) then pc++
+	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "LessThan      "}, // if ((RK(B) <  RK(C)) ~= A) then pc++
+	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgK, ArgCMode: OpArgK, OpMode: IABC /* */, Name: "LessThanOrEqual      "}, // if ((RK(B) <= RK(C)) ~= A) then pc++
+	{TestFlag: 1, SetAFlag: 0, ArgBMode: OpArgN, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "Test    "}, // if not (R(A) <=> C) then pc++
+	{TestFlag: 1, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "TestSet "}, // if (R(B) <=> C) then R(A) := R(B) else pc++
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "CALL    "}, // R(A), ... ,R(A+C-2) := R(A)(R(A+1), ... ,R(A+B-1))
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "TAILCALL"}, // return R(A)(R(A+1), ... ,R(A+B-1))
-	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "RETURN  "}, // return R(A), ... ,R(A+B-2)
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "FORLOOP "}, // R(A)+=R(A+2); if R(A) <?= R(A+1) then { pc+=sBx; R(A+3)=R(A) }
-	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "FORPREP "}, // R(A)-=R(A+2); pc+=sBx
+	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgU, ArgCMode: OpArgN, OpMode: IABC /* */, Name: "Return  "}, // return R(A), ... ,R(A+B-2)
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "ForLoop "}, // R(A)+=R(A+2); if R(A) <?= R(A+1) then { pc+=sBx; R(A+3)=R(A) }
+	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "ForPrep "}, // R(A)-=R(A+2); pc+=sBx
 	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgN, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "TFORCALL"}, // R(A+3), ... ,R(A+2+C) := R(A)(R(A+1), R(A+2));
 	{TestFlag: 0, SetAFlag: 1, ArgBMode: OpArgR, ArgCMode: OpArgN, OpMode: IAsBx /**/, Name: "TFORLOOP"}, // if R(A+1) ~= nil then { R(A)=R(A+1); pc += sBx }
 	{TestFlag: 0, SetAFlag: 0, ArgBMode: OpArgU, ArgCMode: OpArgU, OpMode: IABC /* */, Name: "SETLIST "}, // R(A)[(C-1)*FPF+i] := R(A+i), 1 <= i <= B

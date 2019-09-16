@@ -246,7 +246,7 @@ func(vm *LuaVM) execute() error{
 	vm.Stack = NewStack(int(vm.proto.MaxStackSize))
 	for{
 		ins := &Instruction{Instruction: vm.proto.Code[vm.pc]}
-		if ins.Opcode().Type == code.RETURN{
+		if ins.Opcode().Type == code.Return {
 			break
 		}
 		if err := ins.execute(vm); err != nil{

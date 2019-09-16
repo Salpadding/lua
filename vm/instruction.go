@@ -8,28 +8,28 @@ import (
 
 var opMapping = map[code.Type]types.ArithmeticOperator{
 	// binary operators
-	code.ADD:  types.Add,
-	code.SUB:  types.Sub,
-	code.MUL:  types.Mul,
-	code.DIV:  types.Div,
-	code.IDIV: types.IDiv,
-	code.BAND: types.BitwiseAnd,
-	code.BOR:  types.BitwiseOr,
-	code.BXOR: types.BitwiseXor,
-	code.POW:  types.Pow,
-	code.MOD:  types.Mod,
-	code.SHL:  types.ShiftLeft,
-	code.SHR:  types.ShiftRight,
+	code.Add:        types.Add,
+	code.Sub:        types.Sub,
+	code.Mul:        types.Mul,
+	code.Div:        types.Div,
+	code.IDiv:       types.IDiv,
+	code.BitwiseAnd: types.BitwiseAnd,
+	code.BitwiseOr:  types.BitwiseOr,
+	code.BitwiseXor: types.BitwiseXor,
+	code.Pow:        types.Pow,
+	code.Mod:        types.Mod,
+	code.ShiftLeft:  types.ShiftLeft,
+	code.ShiftRight: types.ShiftRight,
 
 	// unary operators
-	code.BNOT: types.BitwiseNot,
-	code.UNM:  types.UnaryMinus,
+	code.BitwiseNot: types.BitwiseNot,
+	code.UnaryMinus: types.UnaryMinus,
 }
 
 var cmpMapping = map[code.Type]types.Comparison{
-	code.EQ: types.Equal,
-	code.LT: types.LessThan,
-	code.LE: types.LessThanOrEqual,
+	code.Equal:           types.Equal,
+	code.LessThan:        types.LessThan,
+	code.LessThanOrEqual: types.LessThanOrEqual,
 }
 
 type Instruction struct {
@@ -46,38 +46,38 @@ func (ins *Instruction) move(vm *LuaVM) error {
 
 func (ins *Instruction) execute(vm *LuaVM) error {
 	switch ins.Opcode().Type {
-	case code.MOVE:
+	case code.Move:
 		return ins.move(vm)
-	case code.LOADK:
+	case code.LoadK:
 		return ins.loadK(vm)
-	case code.LOADKX:
+	case code.LoadKX:
 		return ins.loadKx(vm)
-	case code.LOADBOOL:
+	case code.LoadBool:
 		return ins.loadBool(vm)
-	case code.LOADNIL:
+	case code.LoadNil:
 		return ins.loadNil(vm)
-	case code.ADD, code.SUB, code.MUL, code.MOD,
-		code.POW, code.DIV, code.IDIV, code.BAND,
-		code.BOR, code.BXOR, code.SHL, code.SHR:
+	case code.Add, code.Sub, code.Mul, code.Mod,
+		code.Pow, code.Div, code.IDiv, code.BitwiseAnd,
+		code.BitwiseOr, code.BitwiseXor, code.ShiftLeft, code.ShiftRight:
 		return ins.binaryArithmetic(vm)
-	case code.BNOT, code.UNM:
+	case code.BitwiseNot, code.UnaryMinus:
 		return ins.unaryArithmetic(vm)
-	case code.NOT:
+	case code.LogicalNot:
 		return ins.not(vm)
-	case code.LEN:
+	case code.Len:
 		return ins.len(vm)
-	case code.CONCAT:
+	case code.Concat:
 		return ins.concat(vm)
-	case code.EQ, code.LT, code.LE:
+	case code.Equal, code.LessThan, code.LessThanOrEqual:
 		op := cmpMapping[ins.Opcode().Type]
 		return ins.compare(vm, op)
-	case code.TEST:
+	case code.Test:
 		return ins.test(vm)
-	case code.TESTSET:
+	case code.TestSet:
 		return ins.testSet(vm)
-	case code.FORLOOP:
+	case code.ForLoop:
 		return ins.forLoop(vm)
-	case code.FORPREP:
+	case code.ForPrep:
 		return ins.forPrep(vm)
 	default:
 		return nil
