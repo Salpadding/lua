@@ -127,9 +127,9 @@ func (s *Stack) reverse(from, to int) error {
 	return nil
 }
 
-func(s *Stack) String() string{
+func (s *Stack) String() string {
 	var buf bytes.Buffer
-	for i := 0; i < s.top; i++{
+	for i := 0; i < s.top; i++ {
 		buf.WriteString(fmt.Sprintf("[%s]", s.slots[i]))
 	}
 	return buf.String()

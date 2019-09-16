@@ -297,7 +297,7 @@ func (t *Table) ToBoolean() Boolean {
 	return true
 }
 
-func(t *Table) ToFloat() (Float, bool){
+func (t *Table) ToFloat() (Float, bool) {
 	return 0, false
 }
 

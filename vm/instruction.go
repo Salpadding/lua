@@ -36,26 +36,26 @@ func (ins *Instruction) loadNil(vm *LuaVM) error {
 }
 
 // R(A) := (bool)B; if (C) pc++
-func(ins *Instruction) loadBool(vm *LuaVM) error{
+func (ins *Instruction) loadBool(vm *LuaVM) error {
 	a, b, c := ins.ABC()
 	a++
-	if err := vm.Push(value.Boolean(b != 0)); err != nil{
+	if err := vm.Push(value.Boolean(b != 0)); err != nil {
 		return err
 	}
-	if err := vm.Replace(a); err != nil{
+	if err := vm.Replace(a); err != nil {
 		return err
 	}
-	if c != 0{
+	if c != 0 {
 		vm.AddPC(1)
 	}
 	return nil
 }
 
 // R(A) := Kst(Bx)
-func(ins *Instruction) loadK(vm *LuaVM) error{
+func (ins *Instruction) loadK(vm *LuaVM) error {
 	a, bx := ins.ABx()
-	a ++
-	if err := vm.GetConst(bx); err != nil{
+	a++
+	if err := vm.GetConst(bx); err != nil {
 		return err
 	}
 	return vm.Replace(a)

@@ -2,7 +2,7 @@ package vm
 
 import "errors"
 
-var(
+var (
 	errInvalidOperand = errors.New("invalid operand found")
-	errIndexOverFlow = errors.New("index overflow")
+	errIndexOverFlow  = errors.New("index overflow")
 )
