@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 
+	"github.com/Salpadding/lua/types/code"
 	"github.com/Salpadding/lua/types/value"
 
 	"github.com/Salpadding/lua/types/tag"
@@ -19,7 +20,7 @@ type Prototype struct {
 	NumParams       byte
 	IsVararg        byte
 	MaxStackSize    byte
-	Code            []Instruction
+	Code            []code.Instruction
 	Constants       []value.Value
 	UpValues        []UpValue
 	Prototypes      []*Prototype
@@ -172,20 +173,20 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	return res, nil
 }
 
-func (b *ByteCodeReader) readCode() ([]Instruction, error) {
-	codes, err := b.ReadUint32()
+func (b *ByteCodeReader) readCode() ([]code.Instruction, error) {
+	rawCodes, err := b.ReadUint32()
 	if err != nil {
 		return nil, err
 	}
-	code := make([]Instruction, codes)
-	for i := range code {
+	codes := make([]code.Instruction, rawCodes)
+	for i := range codes {
 		c, err := b.ReadUint32()
 		if err != nil {
 			return nil, err
 		}
-		code[i] = Instruction(c)
+		codes[i] = code.Instruction(c)
 	}
-	return code, nil
+	return codes, nil
 }
 
 func (b *ByteCodeReader) readConstants() ([]value.Value, error) {
@@ -367,6 +368,3 @@ type LocalVariable struct {
 	StartPC uint32
 	EndPC   uint32
 }
-
-type Instruction uint32
-

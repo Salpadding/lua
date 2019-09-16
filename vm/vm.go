@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Salpadding/lua/types/chunk"
+	"github.com/Salpadding/lua/types/code"
 	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
 )
@@ -227,7 +228,7 @@ func(vm *LuaVM) GetConst(idx int) error{
 	return vm.Push(v)
 }
 
-func (vm *LuaVM) Fetch() chunk.Instruction {
+func (vm *LuaVM) Fetch() code.Instruction {
 	i := vm.proto.Code[vm.pc]
 	vm.pc++
 	return i
