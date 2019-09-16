@@ -200,28 +200,28 @@ func (vm *LuaVM) Concat(n int) error {
 	if n == 1 {
 		return nil
 	}
-	for i := 1; i < n; i ++{
+	for i := 1; i < n; i++ {
 		s2, ok := vm.Get(-1).ToString()
 		s1, ok2 := vm.Get(-2).ToString()
-		if !ok || !ok2{
+		if !ok || !ok2 {
 			return errInvalidOperand
 		}
-		if _, err := vm.PopN(2); err != nil{
+		if _, err := vm.PopN(2); err != nil {
 			return err
 		}
-		if err := vm.Push(value.String(s1 + s2)); err != nil{
+		if err := vm.Push(value.String(s1 + s2)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func(vm *LuaVM) AddPC(i int){
+func (vm *LuaVM) AddPC(i int) {
 	vm.pc += i
 }
 
-func(vm *LuaVM) GetConst(idx int) error{
-	if idx < 0 || idx >= len(vm.proto.Constants){
+func (vm *LuaVM) GetConst(idx int) error {
+	if idx < 0 || idx >= len(vm.proto.Constants) {
 		return errIndexOverFlow
 	}
 	v := vm.proto.Constants[idx]
@@ -232,4 +232,11 @@ func (vm *LuaVM) Fetch() code.Instruction {
 	i := vm.proto.Code[vm.pc]
 	vm.pc++
 	return i
+}
+
+func (vm *LuaVM) GetRK(rk int) error {
+	if rk > 0xff {
+		return vm.GetConst(rk)
+	}
+	return vm.Push(value.Integer(rk + 1))
 }
