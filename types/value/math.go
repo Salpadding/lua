@@ -1,6 +1,11 @@
 package value
 
-import "math"
+import (
+	"math"
+	"strings"
+
+	"github.com/Salpadding/lua/types/value/types"
+)
 
 func FloatToInteger(f Float) (Integer, bool) {
 	// todo: correct?
@@ -133,4 +138,58 @@ func Negative(a Value) (Value, bool) {
 		return -af, true
 	}
 	return nil, false
+}
+
+func sigMod(f Float) int {
+	if f < 0 {
+		return -1
+	}
+	if f > 0 {
+		return 1
+	}
+	return 0
+}
+
+func Compare(a, b Value) (int, bool) {
+	switch x := a.(type) {
+	case String:
+		bs, ok := b.(String)
+		if ok {
+			return strings.Compare(string(x), string(bs)), true
+		}
+	case Integer:
+		switch y := b.(type) {
+		case Integer:
+			return int(x - y), true
+		case Float:
+			return sigMod(Float(x) - y), true
+		}
+	case Float:
+		switch y := b.(type) {
+		case Integer:
+			res, ok := Compare(b, a)
+			return -res, ok
+		case Float:
+			return sigMod(x - y), true
+		}
+	}
+	return 0, false
+}
+
+func Equal(a, b Value) bool {
+	switch x := a.(type) {
+	case *Nil:
+		return b.Type() == types.Nil
+	case Boolean:
+		bb, ok := b.(Boolean)
+		return ok && x == bb
+	case String:
+		bs, ok := b.(String)
+		return ok && bs == x
+	case Integer, Float:
+		cmp, _ := Compare(a, b)
+		return cmp == 0
+	default:
+		return a == b
+	}
 }

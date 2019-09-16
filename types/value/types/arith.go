@@ -2,7 +2,7 @@ package types
 
 type ArithmeticOperator int
 
-const(
+const (
 	Unknown ArithmeticOperator = iota
 	Add
 	Sub
@@ -19,3 +19,4 @@ const(
 	UnaryMinus
 	BitwiseNot
 )
+
