@@ -30,7 +30,8 @@ type Type int
 
 /* OpCode */
 const (
-	MOVE Type = iota
+	Unknown Type = iota
+	MOVE
 	LOADK
 	LOADKX
 	LOADBOOL
