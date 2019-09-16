@@ -42,22 +42,6 @@ func FFloorDiv(a, b Float) Float {
 	return Float(math.Floor(float64(a / b)))
 }
 
-func ShiftLeft(a, n Integer) Integer {
-	if n >= 0 {
-		return a << uint64(n)
-	} else {
-		return ShiftRight(a, -n)
-	}
-}
-
-func ShiftRight(a, n Integer) Integer {
-	if n >= 0 {
-		return Integer(uint64(a) >> uint64(n))
-	} else {
-		return ShiftLeft(a, -n)
-	}
-}
-
 func Add(a, b Value) (Value, bool) {
 	ai, ok := a.(Integer)
 	bi, ok2 := b.(Integer)
@@ -174,6 +158,75 @@ func Compare(a, b Value) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func Pow(a, b Value) (Value, bool) {
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2 {
+		return nil, false
+	}
+	return Float(math.Pow(float64(af), float64(bf))), true
+}
+
+func Div(a, b Value) (Value, bool) {
+	af, ok := a.ToFloat()
+	bf, ok2 := b.ToFloat()
+	if !ok || !ok2 {
+		return nil, false
+	}
+	return af / bf, true
+}
+
+func BitwiseAnd(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2 {
+		return ai & bi, true
+	}
+	return nil, false
+}
+
+func BitwiseXor(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2 {
+		return ai ^ bi, true
+	}
+	return nil, false
+}
+
+func ShiftLeft(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if !ok || !ok2 {
+		return nil, false
+	}
+	if bi >= 0 {
+		return ai << uint64(bi), true
+	}
+	return ai >> uint64(-bi), true
+}
+
+func ShiftRight(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if !ok || !ok2 {
+		return nil, false
+	}
+	if bi >= 0 {
+		return ai >> uint64(bi), true
+	}
+	return ai << uint64(-bi), true
+}
+
+func BitwiseOr(a, b Value) (Value, bool) {
+	ai, ok := a.(Integer)
+	bi, ok2 := a.(Integer)
+	if ok && ok2 {
+		return ai | bi, true
+	}
+	return nil, false
 }
 
 func Equal(a, b Value) bool {

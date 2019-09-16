@@ -18,7 +18,37 @@ const (
 	LuaRelease = LuaVersion + "." + LuaVersionRelease
 )
 
+type BinaryOperator func(a, b value.Value) (value.Value, bool)
 
+type UnaryOperator func(a value.Value) (value.Value, bool)
+
+var binaryOperators = map[types.ArithmeticOperator]BinaryOperator{
+	types.Add:        value.Add,
+	types.Sub:        value.Sub,
+	types.Mul:        value.Mul,
+	types.IDiv:       value.IDiv,
+	types.Mod:        value.Mod,
+	types.Pow:        value.Pow,
+	types.Div:        value.Div,
+	types.BitwiseAnd: value.BitwiseAnd,
+	types.BitwiseXor: value.BitwiseXor,
+	types.BitwiseOr:  value.BitwiseOr,
+	types.ShiftLeft:  value.ShiftLeft,
+	types.ShiftRight: value.ShiftRight,
+}
+
+var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
+	types.UnaryMinus: func(a value.Value) (value.Value, bool) {
+		switch x := a.(type) {
+		case value.Float:
+			return -x, true
+		case value.Integer:
+			return -x, true
+		default:
+			return nil, false
+		}
+	},
+}
 
 // LuaVM is lua state api implementation
 type LuaVM struct {
@@ -127,3 +157,25 @@ func (vm *LuaVM) Rotate(idx, n int) error {
 	return nil
 }
 
+func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
+	switch op {
+	case types.Add, types.Sub, types.Mul, types.IDiv, types.Mod,
+		types.Pow, types.Div, types.BitwiseAnd, types.BitwiseXor,
+		types.BitwiseOr, types.ShiftLeft, types.ShiftRight:
+		a, err := vm.Stack.Pop()
+		if err != nil {
+			return err
+		}
+		b, err := vm.Stack.Pop()
+		if err != nil {
+			return err
+		}
+		operator := binaryOperators[op]
+		v, ok := operator(a, b)
+		if !ok {
+			return errInvalidOperand
+		}
+		return vm.Push(v)
+	}
+	return errInvalidOperand
+}
