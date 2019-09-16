@@ -38,16 +38,8 @@ var binaryOperators = map[types.ArithmeticOperator]BinaryOperator{
 }
 
 var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
-	types.UnaryMinus: func(a value.Value) (value.Value, bool) {
-		switch x := a.(type) {
-		case value.Float:
-			return -x, true
-		case value.Integer:
-			return -x, true
-		default:
-			return nil, false
-		}
-	},
+	types.UnaryMinus: value.UnaryMinus,
+	types.BitwiseNot: value.BitwiseNot,
 }
 
 // LuaVM is lua state api implementation
@@ -172,6 +164,17 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 		}
 		operator := binaryOperators[op]
 		v, ok := operator(a, b)
+		if !ok {
+			return errInvalidOperand
+		}
+		return vm.Push(v)
+	case types.BitwiseNot, types.UnaryMinus:
+		a, err := vm.Stack.Pop()
+		if err != nil {
+			return err
+		}
+		operator := unaryOperators[op]
+		v, ok := operator(a)
 		if !ok {
 			return errInvalidOperand
 		}

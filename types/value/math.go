@@ -21,10 +21,10 @@ func IMod(a, b Integer) Integer {
 // a % b == a - ((a // b) * b)
 // lua-5.3.4/src/llimits.h#luai_nummod
 func FMod(a, b Float) Float {
-	if a > 0 && math.IsInf(float64(b), 1) || a < 0 && math.IsInf(b, -1) {
+	if a > 0 && math.IsInf(float64(b), 1) || a < 0 && math.IsInf(float64(b), -1) {
 		return a
 	}
-	if a > 0 && math.IsInf(float64(b), -1) || a < 0 && math.IsInf(b, 1) {
+	if a > 0 && math.IsInf(float64(b), -1) || a < 0 && math.IsInf(float64(b), 1) {
 		return b
 	}
 	return a - Float(math.Floor(float64(a/b)))*b
@@ -179,8 +179,8 @@ func Div(a, b Value) (Value, bool) {
 }
 
 func BitwiseAnd(a, b Value) (Value, bool) {
-	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	ai, ok := a.ToInteger()
+	bi, ok2 := b.ToInteger()
 	if ok && ok2 {
 		return ai & bi, true
 	}
@@ -188,8 +188,8 @@ func BitwiseAnd(a, b Value) (Value, bool) {
 }
 
 func BitwiseXor(a, b Value) (Value, bool) {
-	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	ai, ok := a.ToInteger()
+	bi, ok2 := b.ToInteger()
 	if ok && ok2 {
 		return ai ^ bi, true
 	}
@@ -197,8 +197,8 @@ func BitwiseXor(a, b Value) (Value, bool) {
 }
 
 func ShiftLeft(a, b Value) (Value, bool) {
-	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	ai, ok := a.ToInteger()
+	bi, ok2 := b.ToInteger()
 	if !ok || !ok2 {
 		return nil, false
 	}
@@ -209,8 +209,8 @@ func ShiftLeft(a, b Value) (Value, bool) {
 }
 
 func ShiftRight(a, b Value) (Value, bool) {
-	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	ai, ok := a.ToInteger()
+	bi, ok2 := b.ToInteger()
 	if !ok || !ok2 {
 		return nil, false
 	}
@@ -221,8 +221,8 @@ func ShiftRight(a, b Value) (Value, bool) {
 }
 
 func BitwiseOr(a, b Value) (Value, bool) {
-	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	ai, ok := a.ToInteger()
+	bi, ok2 := b.ToInteger()
 	if ok && ok2 {
 		return ai | bi, true
 	}
@@ -255,6 +255,25 @@ func Len(a Value) (Value, bool) {
 	switch x := a.(type) {
 	case String:
 		return Integer(len(x)), true
+	}
+	return nil, false
+}
+
+func UnaryMinus(a Value) (Value, bool) {
+	switch x := a.(type) {
+	case Float:
+		return -x, true
+	case Integer:
+		return -x, true
+	default:
+		return nil, false
+	}
+}
+
+func BitwiseNot(a Value) (Value, bool) {
+	ai, ok := a.ToInteger()
+	if ok {
+		return ^ai, true
 	}
 	return nil, false
 }
