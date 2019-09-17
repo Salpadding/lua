@@ -46,38 +46,22 @@ var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
 
 // LuaVM is lua state api implementation
 type LuaVM struct {
-	*Stack
+	*Register
 	proto *chunk.Prototype
 	pc    int
 }
 
 func (vm *LuaVM) Close() {}
 
-func (vm *LuaVM) GetTop() int {
-	return vm.Stack.top
-}
-
-func (vm *LuaVM) CheckStack(i int) {
-	vm.Stack.Check(i)
-}
-
-func (vm *LuaVM) Pop(n int) ([]value.Value, error) {
-	return vm.Stack.PopN(n)
-}
-
 func (vm *LuaVM) Copy(dst, src int) error {
 	return vm.Set(dst, vm.Get(src))
 }
 
-func (vm *LuaVM) PushValue(idx int) error {
-	return vm.Push(vm.Get(idx))
-}
-
 func (vm *LuaVM) Replace(idx int) error {
-	if idx == vm.top {
+	if idx == vm.GetTop() {
 		return nil
 	}
-	v, err := vm.Stack.Pop()
+	v, err := vm.Pop()
 	if err != nil {
 		return err
 	}
@@ -92,21 +76,21 @@ func (vm *LuaVM) Remove(idx int) error {
 	if err := vm.Rotate(idx, -1); err != nil {
 		return err
 	}
-	if _, err := vm.Pop(1); err != nil {
+	if _, err := vm.Pop(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (vm *LuaVM) SetTop(idx int) error {
-	newTop := vm.Stack.AbsIndex(idx)
+	newTop := vm.AbsIndex(idx)
 	if newTop < 0 {
 		return errors.New("stack underflow")
 	}
 
-	n := vm.Stack.top - newTop
+	n := vm.GetTop() - newTop
 	if n > 0 {
-		_, err := vm.Stack.PopN(n)
+		_, err := vm.PopN(n)
 		if err != nil {
 			return err
 		}
@@ -114,7 +98,7 @@ func (vm *LuaVM) SetTop(idx int) error {
 	}
 	if n < 0 {
 		for i := 0; i > n; i-- {
-			if err := vm.Stack.Push(value.GetNil()); err != nil {
+			if err := vm.Push(value.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -134,21 +118,21 @@ func (vm *LuaVM) Type(idx int) types.Type {
 }
 
 func (vm *LuaVM) Rotate(idx, n int) error {
-	t := vm.Stack.top - 1           /* end of stack segment being rotated */
-	p := vm.Stack.AbsIndex(idx) - 1 /* start of segment */
-	var m int                       /* end of prefix */
+	t := vm.GetTop() - 1      /* end of stack segment being rotated */
+	p := vm.AbsIndex(idx) - 1 /* start of segment */
+	var m int                 /* end of prefix */
 	if n >= 0 {
 		m = t - n
 	} else {
 		m = p - n - 1
 	}
-	if err := vm.Stack.reverse(p, m); err != nil {
+	if err := vm.reverse(p, m); err != nil {
 		return err
 	} /* reverse the prefix with length 'n' */
-	if err := vm.Stack.reverse(m+1, t); err != nil {
+	if err := vm.reverse(m+1, t); err != nil {
 		return err
 	} /* reverse the suffix */
-	if err := vm.Stack.reverse(p, t); err != nil {
+	if err := vm.reverse(p, t); err != nil {
 		return err
 	} /* reverse the entire segment */
 	return nil
@@ -159,11 +143,11 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 	case types.Add, types.Sub, types.Mul, types.IDiv, types.Mod,
 		types.Pow, types.Div, types.BitwiseAnd, types.BitwiseXor,
 		types.BitwiseOr, types.ShiftLeft, types.ShiftRight:
-		a, err := vm.Stack.Pop()
+		a, err := vm.Pop()
 		if err != nil {
 			return err
 		}
-		b, err := vm.Stack.Pop()
+		b, err := vm.Pop()
 		if err != nil {
 			return err
 		}
@@ -174,7 +158,7 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 		}
 		return vm.Push(v)
 	case types.BitwiseNot, types.UnaryMinus:
-		a, err := vm.Stack.Pop()
+		a, err := vm.Pop()
 		if err != nil {
 			return err
 		}
@@ -242,11 +226,11 @@ func (vm *LuaVM) GetRK(rk int) error {
 	if rk > 0xff {
 		return vm.GetConst(rk)
 	}
-	return vm.Push(value.Integer(rk + 1))
+	return vm.Push(vm.Get(rk))
 }
 
 func (vm *LuaVM) execute() error {
-	vm.Stack = NewStack(int(vm.proto.MaxStackSize) + 64)
+	*vm.Register = make(Register, 0, vm.proto.MaxStackSize+64)
 	for {
 		ins := &Instruction{Instruction: vm.Fetch()}
 		if ins.Opcode().Type == code.Return {

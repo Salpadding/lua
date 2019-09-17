@@ -11,69 +11,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewStack(t *testing.T) {
-	s := NewStack(1)
-	if err := s.Push(value.String("hello world")); err != nil {
-		t.Error(err)
-	}
-	if err := s.Push(value.String("hello world")); err == nil {
-		t.Fail()
-	}
-	v, err := s.Pop()
-	if err != nil {
-		t.Error(err)
-	}
+func TestNewRegister(t *testing.T) {
+	r := NewRegister(0)
+	assert.NoError(t, r.Push(value.String("hello world")))
+	v, err := r.Pop()
+	assert.NoError(t, err)
 	fmt.Println(v)
-	_, err = s.Pop()
-	if err == nil {
-		t.Fail()
-	}
+	_, err = r.Pop()
+	assert.Error(t, err)
 }
 
 func TestIndex(t *testing.T) {
-	s := NewStack(100)
-	if err := s.Push(value.String("hello world")); err != nil {
-		t.Error(err)
-	}
-	idx := s.AbsIndex(-1)
-	if idx != 1 {
-		t.Fail()
-	}
-	v := s.Get(1)
+	r := NewRegister(64)
+	assert.NoError(t, r.Push(value.String("hello world")))
+	idx := r.AbsIndex(-1)
+	assert.Equal(t, 0, idx)
+	v := r.Get(0)
 	_, ok := v.(*value.Nil)
-	if ok {
-		t.Fail()
-	}
-	if err := s.Set(1, value.Float(1.2)); err != nil {
-		t.Error(err)
-	}
-	v = s.Get(1)
-	_, ok = v.(value.Number)
-	if !ok {
-		t.Fail()
-	}
+	assert.False(t, ok)
+	assert.NoError(t, r.Set(0, value.Float(1.2)))
+	v = r.Get(0)
+	_, ok = v.(value.Float)
+	assert.True(t, ok)
 }
 
-func TestCheck(t *testing.T) {
-	s := NewStack(1)
-	if err := s.Push(value.String("hello world")); err != nil {
-		t.Error(err)
-	}
-	s.Check(4)
-	if len(s.slots) != 5 {
-		t.Fail()
-	}
-	v := s.Get(1)
-	if v.(value.String) != "hello world" {
-		t.Fail()
-	}
-	if err := s.Push(value.String("hello world")); err != nil {
-		t.Error(err)
-	}
-}
 
 func TestStack(t *testing.T) {
-	s := &LuaVM{Stack: NewStack(256)}
+	s := &LuaVM{Register: NewRegister(0)}
 	if err := s.Push(value.Boolean(true)); err != nil {
 		t.Error(err)
 	}
@@ -113,7 +77,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestArithmetic(t *testing.T) {
-	s := &LuaVM{Stack: NewStack(256)}
+	s := &LuaVM{Register: NewRegister(256)}
 	assert.NoError(t, s.Push(value.Integer(1)))
 	assert.NoError(t, s.Push(value.String("2.0")))
 	assert.NoError(t, s.Push(value.String("3.0")))
