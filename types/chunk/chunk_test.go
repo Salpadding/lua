@@ -33,5 +33,3 @@ func Test2(t *testing.T) {
 	}
 	assert.NotNil(t, proto)
 }
-
-

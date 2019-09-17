@@ -2,10 +2,10 @@ package types
 
 type Comparison int
 
-const(
+const (
 	LessThan Comparison = 1 << iota
 	Equal
 	GreaterThan
-	LessThanOrEqual = LessThan | Equal
+	LessThanOrEqual    = LessThan | Equal
 	GreaterThanOrEqual = GreaterThan | Equal
 )

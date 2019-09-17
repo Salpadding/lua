@@ -10,7 +10,7 @@ import (
 
 type Register []value.Value
 
-func NewRegister(cap int) *Register{
+func NewRegister(cap int) *Register {
 	res := make(Register, 0, cap)
 	return &res
 }
@@ -84,11 +84,16 @@ func (r *Register) Get(idx int) value.Value {
 
 func (r *Register) Set(idx int, v value.Value) error {
 	idx = r.AbsIndex(idx)
-	if r.IsValid(idx) {
-		(*r)[idx] = v
-		return nil
+	if idx < 0 {
+		return errors.New("stack set fail, invalid index")
 	}
-	return errors.New("stack set fail, invalid index")
+	for idx >= len(*r) {
+		if err := r.Push(value.GetNil()); err != nil {
+			return err
+		}
+	}
+	(*r)[idx] = v
+	return nil
 }
 
 func (r *Register) reverse(from, to int) error {

@@ -97,7 +97,7 @@ func (vm *LuaVM) SetTop(idx int) error {
 		return nil
 	}
 	if n < 0 {
-		for i := 0; i > n; i-- {
+		for i := 0; i < -n; i++ {
 			if err := vm.Push(value.GetNil()); err != nil {
 				return err
 			}
@@ -118,9 +118,9 @@ func (vm *LuaVM) Type(idx int) types.Type {
 }
 
 func (vm *LuaVM) Rotate(idx, n int) error {
-	t := vm.GetTop() - 1      /* end of stack segment being rotated */
-	p := vm.AbsIndex(idx) - 1 /* start of segment */
-	var m int                 /* end of prefix */
+	t := vm.GetTop()      /* end of stack segment being rotated */
+	p := vm.AbsIndex(idx) /* start of segment */
+	var m int             /* end of prefix */
 	if n >= 0 {
 		m = t - n
 	} else {
@@ -172,15 +172,6 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 	return errInvalidOperand
 }
 
-func (vm *LuaVM) Len(idx int) error {
-	val := vm.Get(idx)
-	v, ok := value.Len(val)
-	if !ok {
-		return errInvalidOperand
-	}
-	return vm.Push(v)
-}
-
 func (vm *LuaVM) Concat(n int) error {
 	if n == 0 {
 		return vm.Push(value.String(""))
@@ -208,7 +199,7 @@ func (vm *LuaVM) AddPC(i int) {
 	vm.pc += i
 }
 
-func (vm *LuaVM) GetConst(idx int) error {
+func (vm *LuaVM) LoadConst(idx int) error {
 	if idx < 0 || idx >= len(vm.proto.Constants) {
 		return errIndexOverFlow
 	}
@@ -222,15 +213,15 @@ func (vm *LuaVM) Fetch() code.Instruction {
 	return i
 }
 
-func (vm *LuaVM) GetRK(rk int) error {
+func (vm *LuaVM) LoadRK(rk int) error {
 	if rk > 0xff {
-		return vm.GetConst(rk)
+		return vm.LoadConst(rk)
 	}
 	return vm.Push(vm.Get(rk))
 }
 
 func (vm *LuaVM) execute() error {
-	*vm.Register = make(Register, 0, vm.proto.MaxStackSize+64)
+	vm.Register = NewRegister(0)
 	for {
 		ins := &Instruction{Instruction: vm.Fetch()}
 		if ins.Opcode().Type == code.Return {

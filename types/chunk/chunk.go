@@ -369,7 +369,7 @@ type LocalVariable struct {
 	EndPC   uint32
 }
 
-func ReadPrototype(rd io.Reader) (*Prototype, error){
+func ReadPrototype(rd io.Reader) (*Prototype, error) {
 	return (&ByteCodeReader{
 		Reader: rd,
 	}).Load()

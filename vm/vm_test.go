@@ -35,7 +35,6 @@ func TestIndex(t *testing.T) {
 	assert.True(t, ok)
 }
 
-
 func TestStack(t *testing.T) {
 	s := &LuaVM{Register: NewRegister(0)}
 	if err := s.Push(value.Boolean(true)); err != nil {
@@ -87,8 +86,6 @@ func TestArithmetic(t *testing.T) {
 	fmt.Println(s)
 	assert.NoError(t, s.Arithmetic(types.BitwiseNot))
 	fmt.Println(s)
-	assert.NoError(t, s.Len(2))
-	fmt.Println(s)
 	assert.NoError(t, s.Concat(3))
 	fmt.Println(s)
 }
@@ -97,6 +94,7 @@ func TestBin(t *testing.T) {
 	f, err := os.Open("testdata/luac.out")
 	assert.NoError(t, err)
 	proto, err := chunk.ReadPrototype(f)
+	fmt.Println(proto)
 	assert.NoError(t, err)
 	vm := &LuaVM{
 		proto: proto,
