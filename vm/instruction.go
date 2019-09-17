@@ -1,6 +1,8 @@
 package vm
 
 import (
+	"errors"
+
 	"github.com/Salpadding/lua/types/code"
 	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
@@ -44,10 +46,21 @@ func (ins *Instruction) move(vm *LuaVM) error {
 	return vm.Copy(dst, src)
 }
 
+func (ins *Instruction) jmp(vm *LuaVM) error {
+	a, sBx := ins.AsBx()
+	vm.AddPC(sBx)
+	if a != 0 {
+		return errors.New("todo")
+	}
+	return nil
+}
+
 func (ins *Instruction) execute(vm *LuaVM) error {
 	switch ins.Opcode().Type {
 	case code.Move:
 		return ins.move(vm)
+	case code.Jmp:
+		return ins.jmp(vm)
 	case code.LoadK:
 		return ins.loadK(vm)
 	case code.LoadKX:
@@ -164,7 +177,7 @@ func (ins *Instruction) unaryArithmetic(vm *LuaVM) error {
 	a, b, _ := ins.ABC()
 	a++
 	b++
-	if err := vm.Push(value.Integer(b)); err != nil {
+	if err := vm.Push(vm.Get(b)); err != nil {
 		return err
 	}
 	op, ok := opMapping[ins.Opcode().Type]
@@ -177,6 +190,7 @@ func (ins *Instruction) unaryArithmetic(vm *LuaVM) error {
 	return vm.Replace(a)
 }
 
+// R(A) := length of R(B)
 func (ins *Instruction) len(vm *LuaVM) error {
 	a, b, _ := ins.ABC()
 	a++
@@ -187,6 +201,7 @@ func (ins *Instruction) len(vm *LuaVM) error {
 	return vm.Replace(a)
 }
 
+// R(A) := R(B).. ... ..R(C)
 func (ins *Instruction) concat(vm *LuaVM) error {
 	a, b, c := ins.ABC()
 	a++
@@ -195,7 +210,7 @@ func (ins *Instruction) concat(vm *LuaVM) error {
 	n := c - b + 1
 	vm.CheckStack(n)
 	for i := b; i <= c; i++ {
-		if err := vm.Push(value.Integer(i)); err != nil {
+		if err := vm.Push(vm.Get(i)); err != nil {
 			return err
 		}
 	}
@@ -270,14 +285,15 @@ func (ins *Instruction) test(vm *LuaVM) error {
 	return nil
 }
 
+// R(A)-=R(A+2); pc+=sBx
 func (ins *Instruction) forPrep(vm *LuaVM) error {
 	a, sBx := ins.AsBx()
 	a++
 
-	if err := vm.Push(value.Integer(a)); err != nil {
+	if err := vm.Push(vm.Get(a)); err != nil {
 		return err
 	}
-	if err := vm.Push(value.Integer(a + 2)); err != nil {
+	if err := vm.Push(vm.Get(a+2)); err != nil {
 		return err
 	}
 	if err := vm.Arithmetic(types.Add); err != nil {
@@ -290,14 +306,18 @@ func (ins *Instruction) forPrep(vm *LuaVM) error {
 	return nil
 }
 
+// R(A)+=R(A+2);
+// if R(A) <?= R(A+1) then {
+//   pc+=sBx; R(A+3)=R(A)
+// }
 func (ins *Instruction) forLoop(vm *LuaVM) error {
 	a, sBx := ins.AsBx()
 	a++
 
-	if err := vm.Push(value.Integer(a + 2)); err != nil {
+	if err := vm.Push(vm.Get(a + 2)); err != nil {
 		return err
 	}
-	if err := vm.Push(value.Integer(a)); err != nil {
+	if err := vm.Push(vm.Get(a)); err != nil {
 		return err
 	}
 	if err := vm.Arithmetic(types.Add); err != nil {

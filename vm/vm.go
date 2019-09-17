@@ -74,6 +74,9 @@ func (vm *LuaVM) PushValue(idx int) error {
 }
 
 func (vm *LuaVM) Replace(idx int) error {
+	if idx == vm.top {
+		return nil
+	}
 	v, err := vm.Stack.Pop()
 	if err != nil {
 		return err
@@ -242,17 +245,17 @@ func (vm *LuaVM) GetRK(rk int) error {
 	return vm.Push(value.Integer(rk + 1))
 }
 
-func(vm *LuaVM) execute() error{
-	vm.Stack = NewStack(int(vm.proto.MaxStackSize))
-	for{
-		ins := &Instruction{Instruction: vm.proto.Code[vm.pc]}
+func (vm *LuaVM) execute() error {
+	vm.Stack = NewStack(int(vm.proto.MaxStackSize) + 64)
+	for {
+		ins := &Instruction{Instruction: vm.Fetch()}
 		if ins.Opcode().Type == code.Return {
 			break
 		}
-		if err := ins.execute(vm); err != nil{
+		if err := ins.execute(vm); err != nil {
 			return err
 		}
-		fmt.Println(vm)
+		fmt.Printf("%s %s\n", ins.Opcode().Name, vm)
 	}
 	return nil
 }
