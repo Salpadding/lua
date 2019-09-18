@@ -2,7 +2,9 @@ package value
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -137,48 +139,48 @@ func (b Boolean) ToFloat() (Float, bool) {
 
 type Number interface {
 	Value
-	Compare(Number) int
+	number()
 }
 
 type Float float64
 
-func (n Float) ToString() (string, bool) {
-	return n.String(), true
+func (f Float) number() {}
+
+func (f Float) ToString() (string, bool) {
+	return f.String(), true
 }
 
-func (n Float) value() {}
+func (f Float) value() {}
 
-func (n Float) Type() types.Type {
+func (f Float) Type() types.Type {
 	return types.Number
 }
 
-func (n Float) Compare(Number) int {
-	return 0
+func (f Float) String() string {
+	return strconv.FormatFloat(float64(f), 'f', -1, 64)
 }
 
-func (n Float) String() string {
-	return strconv.FormatFloat(float64(n), 'f', -1, 64)
+func (f Float) ToNumber() (Number, bool) {
+	return f, true
 }
 
-func (n Float) ToNumber() (Number, bool) {
-	return n, true
-}
-
-func (n Float) ToInteger() (Integer, bool) {
+func (f Float) ToInteger() (Integer, bool) {
 	// todo: correct?
-	i := int64(n)
-	return Integer(i), Float(i) == n
+	i := int64(f)
+	return Integer(i), Float(i) == f
 }
 
-func (n Float) ToBoolean() Boolean {
+func (f Float) ToBoolean() Boolean {
 	return true
 }
 
-func (n Float) ToFloat() (Float, bool) {
-	return n, true
+func (f Float) ToFloat() (Float, bool) {
+	return f, true
 }
 
 type Integer int64
+
+func (i Integer) number() {}
 
 func (i Integer) ToString() (string, bool) {
 	return i.String(), true
@@ -192,10 +194,6 @@ func (i Integer) String() string {
 
 func (i Integer) Type() types.Type {
 	return types.Number
-}
-
-func (i Integer) Compare(Number) int {
-	return 0
 }
 
 func (i Integer) ToNumber() (Number, bool) {
@@ -257,7 +255,7 @@ func (s String) ToFloat() (Float, bool) {
 }
 
 type Table struct {
-	array   []Value
+	array   *array
 	m       map[string]Value
 	isArray bool
 }
@@ -302,7 +300,21 @@ func (t *Table) ToFloat() (Float, bool) {
 }
 
 func (t *Table) Set(k Value, v Value) error {
-	return nil
+	switch x := k.(type) {
+	case *Nil, *None:
+		return nil
+	case Integer:
+		return t.array.Set(int(x), v)
+	case Float:
+		if math.IsNaN(float64(x)) {
+			return errors.New("NaN index")
+		}
+		i, ok := x.ToInteger()
+		if ok {
+			return t.array.Set(int(i), v)
+		}
+
+	}
 }
 
 func (t *Table) Get(k Value) Value {
@@ -360,4 +372,39 @@ func (t Thread) Type() types.Type {
 
 func (t Thread) ToBoolean() Boolean {
 	return true
+}
+
+type array []Value
+
+func (l *array) Get(idx int) (Value, error) {
+	idx = idx - 1
+	if idx < 0 || idx >= len(*l) {
+		return nil, errors.New("index overflow")
+	}
+	return (*l)[idx], nil
+}
+
+func (l *array) Set(idx int, val Value) error {
+	idx = idx - 1
+	if idx < 0 {
+		return errors.New("index overflow")
+	}
+	for idx >= len(*l) {
+		*l = append(*l, GetNil())
+	}
+	(*l)[idx] = val
+	return nil
+}
+
+func (l *array) Len() int {
+	return len(*l)
+}
+
+func (l *array) shrink() {
+	if len(*l) == 0 {
+		return
+	}
+	for (*l)[len(*l)-1].Type() == types.Nil {
+		*l = (*l)[:len(*l)-1]
+	}
 }
