@@ -35,14 +35,14 @@ const (
 	LoadKX
 	LoadBool
 	LoadNil
-	GETUPVAL
-	GETTABUP
-	GETTABLE
-	SETTABUP
-	SETUPVAL
-	SETTABLE
-	NEWTABLE
-	SELF
+	GetUpValue
+	GetTableUp
+	GetTable
+	SetTableUp
+	SetUpValue
+	SetTable
+	NewTable
+	Self
 	Add
 	Sub
 	Mul
@@ -66,17 +66,17 @@ const (
 	LessThanOrEqual
 	Test
 	TestSet
-	CALL
-	TAILCALL
+	Call
+	TailCall
 	Return
 	ForLoop
 	ForPrep
-	TFORCALL
-	TFORLOOP
-	SETLIST
-	CLOSURE
-	VARARG
-	EXTRAARG
+	TForCall
+	TForLoop
+	SetList
+	Closure
+	VarArg
+	ExtraArg
 )
 
 func init() {
@@ -182,6 +182,11 @@ func (ins Instruction) ArgCMode() OpArgMask {
 }
 
 func (ins Instruction) ABC() (a, b, c int) {
+	/*
+		'A' : 8 bits
+		'B' : 9 bits
+		'C' : 9 bits
+	*/
 	a = int(ins >> 6 & 0xFF)
 	c = int(ins >> 14 & 0x1FF)
 	b = int(ins >> 23 & 0x1FF)

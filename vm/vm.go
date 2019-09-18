@@ -143,11 +143,11 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 	case types.Add, types.Sub, types.Mul, types.IDiv, types.Mod,
 		types.Pow, types.Div, types.BitwiseAnd, types.BitwiseXor,
 		types.BitwiseOr, types.ShiftLeft, types.ShiftRight:
-		a, err := vm.Pop()
+		b, err := vm.Pop()
 		if err != nil {
 			return err
 		}
-		b, err := vm.Pop()
+		a, err := vm.Pop()
 		if err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ func (vm *LuaVM) Fetch() code.Instruction {
 
 func (vm *LuaVM) LoadRK(rk int) error {
 	if rk > 0xff {
-		return vm.LoadConst(rk)
+		return vm.LoadConst(rk & 0xff)
 	}
 	return vm.Push(vm.Get(rk))
 }

@@ -86,7 +86,7 @@ func Mul(a, b Value) (Value, bool) {
 
 func Mod(a, b Value) (Value, bool) {
 	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	bi, ok2 := b.(Integer)
 	if ok && ok2 {
 		return IMod(ai, bi), true
 	}
@@ -100,7 +100,7 @@ func Mod(a, b Value) (Value, bool) {
 
 func IDiv(a, b Value) (Value, bool) {
 	ai, ok := a.(Integer)
-	bi, ok2 := a.(Integer)
+	bi, ok2 := b.(Integer)
 	if ok && ok2 {
 		return IFloorDiv(ai, bi), true
 	}
