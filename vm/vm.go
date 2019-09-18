@@ -139,10 +139,8 @@ func (vm *LuaVM) Rotate(idx, n int) error {
 }
 
 func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
-	switch op {
-	case types.Add, types.Sub, types.Mul, types.IDiv, types.Mod,
-		types.Pow, types.Div, types.BitwiseAnd, types.BitwiseXor,
-		types.BitwiseOr, types.ShiftLeft, types.ShiftRight:
+	binOp, ok := binaryOperators[op]
+	if ok {
 		b, err := vm.Pop()
 		if err != nil {
 			return err
@@ -151,19 +149,19 @@ func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
 		if err != nil {
 			return err
 		}
-		operator := binaryOperators[op]
-		v, ok := operator(a, b)
+		v, ok := binOp(a, b)
 		if !ok {
 			return errInvalidOperand
 		}
 		return vm.Push(v)
-	case types.BitwiseNot, types.UnaryMinus:
+	}
+	unaryOp, ok := unaryOperators[op]
+	if ok {
 		a, err := vm.Pop()
 		if err != nil {
 			return err
 		}
-		operator := unaryOperators[op]
-		v, ok := operator(a)
+		v, ok := unaryOp(a)
 		if !ok {
 			return errInvalidOperand
 		}
@@ -207,6 +205,13 @@ func (vm *LuaVM) LoadConst(idx int) error {
 	return vm.Push(v)
 }
 
+func (vm *LuaVM) GetConst(idx int) (value.Value, error) {
+	if idx < 0 || idx >= len(vm.proto.Constants) {
+		return nil, errIndexOverFlow
+	}
+	return vm.proto.Constants[idx], nil
+}
+
 func (vm *LuaVM) Fetch() code.Instruction {
 	i := vm.proto.Code[vm.pc]
 	vm.pc++
@@ -218,6 +223,13 @@ func (vm *LuaVM) LoadRK(rk int) error {
 		return vm.LoadConst(rk & 0xff)
 	}
 	return vm.Push(vm.Get(rk))
+}
+
+func (vm *LuaVM) GetRK(rk int) (value.Value, error) {
+	if rk > 0xff {
+		return vm.GetConst(rk & 0xff)
+	}
+	return vm.Get(rk), nil
 }
 
 func (vm *LuaVM) execute() error {

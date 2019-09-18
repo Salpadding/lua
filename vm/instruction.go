@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/Salpadding/lua/types/code"
@@ -54,6 +55,10 @@ func (ins *Instruction) jmp(vm *LuaVM) error {
 }
 
 func (ins *Instruction) execute(vm *LuaVM) error {
+	_, ok := opMapping[ins.Opcode().Type]
+	if ok {
+		return ins.arithmetic(vm)
+	}
 	switch ins.Opcode().Type {
 	case code.Move:
 		return ins.move(vm)
@@ -67,12 +72,6 @@ func (ins *Instruction) execute(vm *LuaVM) error {
 		return ins.loadBool(vm)
 	case code.LoadNil:
 		return ins.loadNil(vm)
-	case code.Add, code.Sub, code.Mul, code.Mod,
-		code.Pow, code.Div, code.IDiv, code.BitwiseAnd,
-		code.BitwiseOr, code.BitwiseXor, code.ShiftLeft, code.ShiftRight:
-		return ins.binaryArithmetic(vm)
-	case code.BitwiseNot, code.UnaryMinus:
-		return ins.unaryArithmetic(vm)
 	case code.LogicalNot:
 		return ins.not(vm)
 	case code.Len:
@@ -121,56 +120,67 @@ func (ins *Instruction) loadBool(vm *LuaVM) error {
 // R(A) := Kst(Bx)
 func (ins *Instruction) loadK(vm *LuaVM) error {
 	a, bx := ins.ABx()
-	if err := vm.LoadConst(bx); err != nil {
+	v, err := vm.GetConst(bx)
+	if err != nil {
 		return err
 	}
-	return vm.Replace(a)
+	return vm.Set(a, v)
 }
 
 // R(A) := Kst(extra arg)
 func (ins *Instruction) loadKx(vm *LuaVM) error {
 	a, _ := ins.ABx()
 	ax := vm.Fetch().Ax()
-	if err := vm.LoadConst(ax); err != nil {
+	v, err := vm.GetConst(ax)
+	if err != nil {
 		return err
 	}
-	return vm.Replace(a)
+	return vm.Set(a, v)
+}
+
+func (ins *Instruction) arithmetic(vm *LuaVM) error {
+	op, _ := opMapping[ins.Opcode().Type]
+	_, ok := binaryOperators[op]
+	if ok {
+		return ins.binaryArithmetic(vm)
+	}
+	return ins.unaryArithmetic(vm)
 }
 
 // R(A) := RK(B) op RK(C)
 func (ins *Instruction) binaryArithmetic(vm *LuaVM) error {
 	a, b, c := ins.ABC()
-	op, ok := opMapping[ins.Opcode().Type]
-
-	if err := vm.LoadRK(b); err != nil {
+	op, _ := opMapping[ins.Opcode().Type]
+	fn, _ := binaryOperators[op]
+	v1, err := vm.GetRK(b)
+	if err != nil {
 		return err
 	}
-	if err := vm.LoadRK(c); err != nil {
+	v2, err := vm.GetRK(c)
+	if err != nil {
 		return err
 	}
+	v, ok := fn(v1, v2)
 	if !ok {
 		return errInvalidOperand
 	}
-	if err := vm.Arithmetic(op); err != nil {
-		return err
-	}
-	return vm.Replace(a)
+	return vm.Set(a, v)
 }
 
 // R(A) := op R(B)
 func (ins *Instruction) unaryArithmetic(vm *LuaVM) error {
 	a, b, _ := ins.ABC()
-	if err := vm.Push(vm.Get(b)); err != nil {
+	op, _ := opMapping[ins.Opcode().Type]
+	fn, _ := unaryOperators[op]
+	v1, err := vm.GetRK(b)
+	if err != nil {
 		return err
 	}
-	op, ok := opMapping[ins.Opcode().Type]
+	v, ok := fn(v1)
 	if !ok {
 		return errInvalidOperand
 	}
-	if err := vm.Arithmetic(op); err != nil {
-		return err
-	}
-	return vm.Replace(a)
+	return vm.Set(a, v)
 }
 
 // R(A) := length of R(B)
@@ -186,16 +196,15 @@ func (ins *Instruction) len(vm *LuaVM) error {
 // R(A) := R(B).. ... ..R(C)
 func (ins *Instruction) concat(vm *LuaVM) error {
 	a, b, c := ins.ABC()
-	n := c - b + 1
+	var str bytes.Buffer
 	for i := b; i <= c; i++ {
-		if err := vm.Push(vm.Get(i)); err != nil {
-			return err
+		s, ok := vm.Get(i).ToString()
+		if !ok {
+			return errInvalidOperand
 		}
+		str.WriteString(s)
 	}
-	if err := vm.Concat(n); err != nil {
-		return err
-	}
-	return vm.Replace(a)
+	return vm.Set(a, value.String(str.String()))
 }
 
 // if ((RK(B) op RK(C)) ~= A) then pc++
@@ -205,19 +214,12 @@ func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
 		ok  bool
 	)
 	a, b, c := ins.ABC()
-	if err := vm.LoadRK(b); err != nil {
+	v1, err := vm.GetRK(b)
+	if err != nil {
 		return err
 	}
-	if err := vm.LoadRK(c); err != nil {
-		return err
-	}
-
-	v2, err := vm.Pop()
-	if err != nil{
-		return err
-	}
-	v1, err := vm.Pop()
-	if err != nil{
+	v2, err := vm.GetRK(c)
+	if err != nil {
 		return err
 	}
 	if comparison == types.Equal {
@@ -238,10 +240,7 @@ func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
 // R(A) := not R(B)
 func (ins *Instruction) not(vm *LuaVM) error {
 	a, b, _ := ins.ABC()
-	if err := vm.Push(vm.Get(b).ToBoolean()); err != nil {
-		return err
-	}
-	return vm.Replace(a)
+	return vm.Set(a, !vm.Get(b).ToBoolean())
 }
 
 // if (R(B) <=> C) then R(A) := R(B) else pc++
@@ -266,16 +265,11 @@ func (ins *Instruction) test(vm *LuaVM) error {
 // R(A)-=R(A+2); pc+=sBx
 func (ins *Instruction) forPrep(vm *LuaVM) error {
 	a, sBx := ins.AsBx()
-	if err := vm.Push(vm.Get(a)); err != nil {
-		return err
+	v, ok := value.Sub(vm.Get(a), vm.Get(a+2))
+	if !ok {
+		return errInvalidOperand
 	}
-	if err := vm.Push(vm.Get(a + 2)); err != nil {
-		return err
-	}
-	if err := vm.Arithmetic(types.Sub); err != nil {
-		return err
-	}
-	if err := vm.Replace(a); err != nil {
+	if err := vm.Set(a, v); err != nil {
 		return err
 	}
 	vm.AddPC(sBx)
@@ -289,16 +283,11 @@ func (ins *Instruction) forPrep(vm *LuaVM) error {
 func (ins *Instruction) forLoop(vm *LuaVM) error {
 	a, sBx := ins.AsBx()
 	var expect types.Comparison
-	if err := vm.Push(vm.Get(a)); err != nil {
-		return err
+	v, ok := value.Add(vm.Get(a), vm.Get(a+2))
+	if !ok {
+		return errInvalidOperand
 	}
-	if err := vm.Push(vm.Get(a + 2)); err != nil {
-		return err
-	}
-	if err := vm.Arithmetic(types.Add); err != nil {
-		return err
-	}
-	if err := vm.Replace(a); err != nil {
+	if err := vm.Set(a, v); err != nil {
 		return err
 	}
 	num, _ := vm.Get(a + 2).ToFloat()
