@@ -251,7 +251,7 @@ func equal(a, b Value) bool {
 		return ok && bs == x
 	case Integer, Float:
 		cmp, _ := Compare(a, b)
-		return cmp == 0
+		return cmp == types.Equal
 	default:
 		return a == b
 	}

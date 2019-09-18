@@ -94,6 +94,9 @@ func TestBin(t *testing.T) {
 	f, err := os.Open("testdata/luac.out")
 	assert.NoError(t, err)
 	proto, err := chunk.ReadPrototype(f)
+	//for i := range proto.Code {
+	//	fmt.Println(proto.Code[i].OpName())
+	//}
 	assert.NoError(t, err)
 	vm := &LuaVM{
 		proto: proto,

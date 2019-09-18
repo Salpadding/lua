@@ -212,8 +212,14 @@ func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
 		return err
 	}
 
-	v1 := vm.Get(-1)
-	v2 := vm.Get(-2)
+	v2, err := vm.Pop()
+	if err != nil{
+		return err
+	}
+	v1, err := vm.Pop()
+	if err != nil{
+		return err
+	}
 	if comparison == types.Equal {
 		cmp, ok = value.Equal(v1, v2)
 	} else {
@@ -226,8 +232,7 @@ func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
 	if ok != (a != 0) {
 		vm.AddPC(1)
 	}
-	_, err := vm.PopN(2)
-	return err
+	return nil
 }
 
 // R(A) := not R(B)
@@ -283,10 +288,11 @@ func (ins *Instruction) forPrep(vm *LuaVM) error {
 // }
 func (ins *Instruction) forLoop(vm *LuaVM) error {
 	a, sBx := ins.AsBx()
-	if err := vm.Push(vm.Get(a + 2)); err != nil {
+	var expect types.Comparison
+	if err := vm.Push(vm.Get(a)); err != nil {
 		return err
 	}
-	if err := vm.Push(vm.Get(a)); err != nil {
+	if err := vm.Push(vm.Get(a + 2)); err != nil {
 		return err
 	}
 	if err := vm.Arithmetic(types.Add); err != nil {
@@ -298,7 +304,12 @@ func (ins *Instruction) forLoop(vm *LuaVM) error {
 	num, _ := vm.Get(a + 2).ToFloat()
 	v1, v2 := vm.Get(a), vm.Get(a+1)
 	cmp, _ := value.Compare(v1, v2)
-	if num >= 0 && types.LessThanOrEqual&cmp != 0 || num < 0 && types.GreaterThanOrEqual&cmp != 0 {
+	if num >= 0 {
+		expect = types.LessThanOrEqual
+	} else {
+		expect = types.GreaterThanOrEqual
+	}
+	if expect&cmp != 0 {
 		vm.AddPC(sBx)
 		return vm.Copy(a+3, a)
 	}
