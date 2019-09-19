@@ -389,7 +389,10 @@ func (l *array) Set(idx int, val Value) error {
 	if idx < 0 {
 		return errors.New("index overflow")
 	}
-	for idx >= len(*l) {
+	if idx > len(*l){
+		return errors.New("index overflow")
+	}
+	for idx == len(*l) {
 		*l = append(*l, GetNil())
 	}
 	(*l)[idx] = val
