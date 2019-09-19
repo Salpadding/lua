@@ -257,7 +257,6 @@ func (s String) ToFloat() (Float, bool) {
 type Table struct {
 	array   *array
 	m       map[string]Value
-	isArray bool
 }
 
 func (t *Table) ToNumber() (Number, bool) {
@@ -275,16 +274,7 @@ func (t *Table) Type() types.Type {
 func (t *Table) value() {}
 
 func (t *Table) String() string {
-	if t.isArray {
-		return fmt.Sprintf("[ %s ]", common.Join(common.ToGeneral(t.array), ", "))
-	}
-	res := make([]string, len(t.m))
-	i := 0
-	for k, v := range t.m {
-		res[i] = fmt.Sprintf("%s = %s", k, v)
-		i++
-	}
-	return fmt.Sprintf("{ %s }", strings.Join(res, ", "))
+	return fmt.Sprintf("[ %s ]", common.Join(common.ToGeneral(t.array), ", "))
 }
 
 func (t *Table) ToString() (string, bool) {
