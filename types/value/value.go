@@ -255,8 +255,8 @@ func (s String) ToFloat() (Float, bool) {
 }
 
 type Table struct {
-	array   *array
-	m       map[string]Value
+	array *array
+	m     map[Value]Value
 }
 
 func (t *Table) ToNumber() (Number, bool) {
@@ -294,6 +294,10 @@ func (t *Table) Set(k Value, v Value) error {
 	case *Nil, *None:
 		return nil
 	case Integer:
+		if int(x-1) < t.array.Len() {
+			t.array.Set(int(x), v)
+
+		}
 		return t.array.Set(int(x), v)
 	case Float:
 		if math.IsNaN(float64(x)) {
@@ -301,7 +305,7 @@ func (t *Table) Set(k Value, v Value) error {
 		}
 		i, ok := x.ToInteger()
 		if ok {
-			return t.array.Set(int(i), v)
+			return t.Set(i, v)
 		}
 
 	}
@@ -374,19 +378,12 @@ func (l *array) Get(idx int) (Value, error) {
 	return (*l)[idx], nil
 }
 
-func (l *array) Set(idx int, val Value) error {
+func (l *array) Set(idx int, val Value)  {
 	idx = idx - 1
-	if idx < 0 {
-		return errors.New("index overflow")
-	}
-	if idx > len(*l){
-		return errors.New("index overflow")
-	}
 	for idx == len(*l) {
 		*l = append(*l, GetNil())
 	}
 	(*l)[idx] = val
-	return nil
 }
 
 func (l *array) Len() int {
