@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 
 	"github.com/Salpadding/lua/types/value/types"
 
@@ -259,6 +258,13 @@ type Table struct {
 	m     map[Value]Value
 }
 
+func NewTable() *Table {
+	return &Table{
+		array: &array{},
+		m:     map[Value]Value{},
+	}
+}
+
 func (t *Table) ToNumber() (Number, bool) {
 	return nil, false
 }
@@ -274,7 +280,7 @@ func (t *Table) Type() types.Type {
 func (t *Table) value() {}
 
 func (t *Table) String() string {
-	return fmt.Sprintf("[ %s ]", common.Join(common.ToGeneral(t.array), ", "))
+	return fmt.Sprintf("[ %s ]", common.Join(common.ToGeneral(*t.array), ", "))
 }
 
 func (t *Table) ToString() (string, bool) {
@@ -294,11 +300,13 @@ func (t *Table) Set(k Value, v Value) error {
 	case *Nil, *None:
 		return nil
 	case Integer:
-		if int(x-1) < t.array.Len() {
+		if int(x) <= t.array.Len()+1 {
 			t.array.Set(int(x), v)
-
+			t.expand()
+			return nil
 		}
-		return t.array.Set(int(x), v)
+		t.m[k] = v
+		return nil
 	case Float:
 		if math.IsNaN(float64(x)) {
 			return errors.New("NaN index")
@@ -307,12 +315,55 @@ func (t *Table) Set(k Value, v Value) error {
 		if ok {
 			return t.Set(i, v)
 		}
-
+		t.m[k] = v
+		return nil
+	default:
+		if v == nil || v.Type() == types.Nil {
+			return nil
+		}
+		t.m[k] = v
+		return nil
 	}
 }
 
-func (t *Table) Get(k Value) Value {
-	return nil
+func (t *Table) expand() {
+	idx := t.array.Len() + 1
+	for {
+		val, ok := t.m[Integer(idx)]
+		if !ok || val.Type() == types.Nil {
+			break
+		}
+		delete(t.m, val)
+		t.array.Set(idx, val)
+		idx++
+	}
+}
+
+func(t *Table) Len() int{
+	return t.array.Len()
+}
+func (t *Table) Get(k Value) (Value, error) {
+	v, ok := t.m[k]
+	switch x := k.(type) {
+	case *Nil, *None:
+		return GetNil(), nil
+	case Integer:
+		if int(x-1) < t.array.Len() {
+			return t.array.Get(int(x))
+		}
+	case Float:
+		if math.IsNaN(float64(x)) {
+			return nil, errors.New("NaN index")
+		}
+		i, ok := x.ToInteger()
+		if ok {
+			return t.Get(i)
+		}
+	}
+	if ok {
+		return v, nil
+	}
+	return GetNil(), nil
 }
 
 type Function struct {
@@ -378,12 +429,15 @@ func (l *array) Get(idx int) (Value, error) {
 	return (*l)[idx], nil
 }
 
-func (l *array) Set(idx int, val Value)  {
+func (l *array) Set(idx int, val Value) {
 	idx = idx - 1
 	for idx == len(*l) {
 		*l = append(*l, GetNil())
 	}
 	(*l)[idx] = val
+	if val.Type() == types.Nil {
+		l.shrink()
+	}
 }
 
 func (l *array) Len() int {
