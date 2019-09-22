@@ -269,6 +269,8 @@ func Len(a Value) (Value, bool) {
 	switch x := a.(type) {
 	case String:
 		return Integer(len(x)), true
+	case *Table:
+		return Integer(x.Len()), true
 	}
 	return nil, false
 }

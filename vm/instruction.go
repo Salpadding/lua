@@ -9,6 +9,10 @@ import (
 	"github.com/Salpadding/lua/types/value/types"
 )
 
+const (
+	fieldsPerFlush = 50
+)
+
 var opMapping = map[code.Type]types.ArithmeticOperator{
 	// binary operators
 	code.Add:        types.Add,
@@ -89,6 +93,14 @@ func (ins *Instruction) execute(vm *LuaVM) error {
 		return ins.forLoop(vm)
 	case code.ForPrep:
 		return ins.forPrep(vm)
+	case code.NewTable:
+		return ins.newTable(vm)
+	case code.GetTable:
+		return ins.getTable(vm)
+	case code.SetTable:
+		return ins.setTable(vm)
+	case code.SetList:
+		return ins.setList(vm)
 	default:
 		return nil
 	}
@@ -304,3 +316,69 @@ func (ins *Instruction) forLoop(vm *LuaVM) error {
 	}
 	return nil
 }
+
+// R(A) := {} (size = B, C)
+func (ins *Instruction) newTable(vm *LuaVM) error {
+	a, _, _ := ins.ABC()
+	return vm.Set(a, value.NewTable())
+}
+
+// R(A) [RK(B)] := RK(C)
+func (ins *Instruction) setTable(vm *LuaVM) error {
+	a, b, c := ins.ABC()
+	v1, err := vm.GetRK(b)
+	if err != nil {
+		return err
+	}
+	v2, err := vm.GetRK(c)
+	if err != nil {
+		return err
+	}
+	tb, ok := vm.Get(a).(*value.Table)
+	if !ok {
+		return errInvalidOperand
+	}
+	return tb.Set(v1, v2)
+}
+
+// R(A)[(C-1)*FPF+i] := R(A+i), 1 <= i <= B
+func (ins *Instruction) setList(vm *LuaVM) error {
+	a, b, c := ins.ABC()
+	if c > 0 {
+		c--
+	} else {
+		c = vm.Fetch().Ax()
+	}
+	tb, ok := vm.Get(a).(*value.Table)
+	if !ok {
+		return errInvalidOperand
+	}
+	idx := c * fieldsPerFlush
+	for j := 1; j <= b; j++ {
+		idx++
+		if err := tb.Set(value.Integer(idx), vm.Get(a+j)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// R(A) := R(B)[RK(C)]
+func(ins *Instruction) getTable(vm *LuaVM) error{
+	a, b, c := ins.ABC()
+	v, err := vm.GetRK(c)
+	if err != nil{
+		return err
+	}
+	tb, ok := vm.Get(b).(*value.Table)
+	if !ok {
+		return errInvalidOperand
+	}
+	v, err = tb.Get(v)
+	if err != nil{
+		return err
+	}
+	return vm.Set(a, v)
+}
+
+
