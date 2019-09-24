@@ -47,6 +47,7 @@ type Frame struct {
 	*Register
 	proto    *types.Prototype
 	pc       int
+	varArgs  []types.Value
 	returned []types.Value
 }
 

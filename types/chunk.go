@@ -16,7 +16,7 @@ type Prototype struct {
 	LineDefined     uint32
 	LastLineDefined uint32
 	NumParams       byte
-	IsVararg        byte
+	IsVararg        bool
 	MaxStackSize    byte
 	Code            []code.Instruction
 	Constants       []Value
@@ -128,7 +128,10 @@ func (b *ByteCodeReader) Load() (*Prototype, error) {
 
 func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	res := &Prototype{}
-	var err error
+	var (
+		err error
+		isVarArg byte
+	)
 	if res.Source, err = b.ReadString(); err != nil {
 		return nil, err
 	}
@@ -141,9 +144,10 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	if res.NumParams, err = b.ReadByte(); err != nil {
 		return nil, err
 	}
-	if res.IsVararg, err = b.ReadByte(); err != nil {
+	if isVarArg, err = b.ReadByte(); err != nil {
 		return nil, err
 	}
+	res.IsVararg = isVarArg != 0
 	if res.MaxStackSize, err = b.ReadByte(); err != nil {
 		return nil, err
 	}

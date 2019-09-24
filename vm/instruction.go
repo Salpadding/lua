@@ -107,6 +107,12 @@ func (ins *Instruction) execute(vm *Frame) error {
 		return ins.closure(vm)
 	case code.Call:
 		return ins.call(vm)
+	case code.VarArg:
+		return ins.varArgs(vm)
+	case code.TailCall:
+		return ins.call(vm)
+	case code.Self:
+		return ins.self(vm)
 	default:
 		return nil
 	}
@@ -355,6 +361,12 @@ func (ins *Instruction) setList(f *Frame) error {
 	} else {
 		c = f.Fetch().Ax()
 	}
+
+	if b == 0 {
+		last, _ := f.Get(-1).ToInteger()
+		b = int(last) - a - 1
+	}
+
 	tb, ok := f.Get(a).(*types.Table)
 	if !ok {
 		return errInvalidOperand
@@ -418,6 +430,9 @@ func (ins *Instruction) call(f *Frame) error {
 	if err := newFrame.PushN(int(fn.NumParams), args...); err != nil {
 		return err
 	}
+	if len(args) > int(fn.NumParams) && f.proto.IsVararg {
+		newFrame.varArgs = args[fn.NumParams+1:]
+	}
 	values, err := newFrame.execute()
 	if err != nil || len(values) != c-1 {
 		return err
@@ -429,4 +444,55 @@ func (ins *Instruction) call(f *Frame) error {
 		}
 	}
 	return nil
+}
+
+// R(A), R(A+1), ..., R(A+B-2) = vararg
+func (ins *Instruction) varArgs(f *Frame) error {
+	a, b, _ := ins.ABC()
+	if b == 1 {
+		return nil
+	}
+	varArgsSize := b - 1
+	if varArgsSize < 0 {
+		varArgsSize = len(f.varArgs)
+	}
+	args := f.varArgs
+	if varArgsSize < len(f.varArgs) {
+		args = f.varArgs[:varArgsSize]
+	}
+	for i := 0; i < varArgsSize; i++ {
+		if a+i >= len(args) {
+			if err := f.Set(a+i, types.GetNil()); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := f.Set(a+i, args[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// R(A+1) := R(B); R(A) := R(B)[RK(C)]
+func (ins *Instruction) self(f *Frame) error {
+	a, b, c := ins.ABC()
+
+	if err := f.Copy(a+1, b); err != nil {
+		return err
+	}
+
+	tb, ok := f.Get(b).(*types.Table)
+	if !ok {
+		return errInvalidOperand
+	}
+	k, err := f.GetRK(c)
+	if err != nil {
+		return err
+	}
+	v, err := tb.Get(k)
+	if err != nil {
+		return err
+	}
+	return f.Set(a, v)
 }
