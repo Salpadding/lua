@@ -7,6 +7,7 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/value/types"
 
 	"github.com/Salpadding/lua/common"
@@ -379,11 +380,17 @@ func (t *Table) Get(k Value) (Value, error) {
 }
 
 type Function struct {
+	*chunk.Prototype
 }
 
-func (f *Function) ToString() string {
-	return ""
+func (f *Function) ToFloat() (Float, bool) {
+	return 0, false
 }
+
+func (f *Function) ToString() (string, bool) {
+	return "", false
+}
+
 
 func (f *Function) ToNumber() (Number, bool) {
 	return nil, false

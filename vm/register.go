@@ -119,3 +119,11 @@ func (r *Register) String() string {
 	}
 	return buf.String()
 }
+
+func(r *Register) Slice(start, end int) []value.Value{
+	res := make([]value.Value, end - start)
+	for i := range res {
+		res[i] = r.Get(start + i)
+	}
+	return res
+}

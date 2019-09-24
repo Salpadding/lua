@@ -342,21 +342,21 @@ func (ins *Instruction) setTable(vm *Frame) error {
 }
 
 // R(A)[(C-1)*FPF+i] := R(A+i), 1 <= i <= B
-func (ins *Instruction) setList(vm *Frame) error {
+func (ins *Instruction) setList(f *Frame) error {
 	a, b, c := ins.ABC()
 	if c > 0 {
 		c--
 	} else {
-		c = vm.Fetch().Ax()
+		c = f.Fetch().Ax()
 	}
-	tb, ok := vm.Get(a).(*value.Table)
+	tb, ok := f.Get(a).(*value.Table)
 	if !ok {
 		return errInvalidOperand
 	}
 	idx := c * fieldsPerFlush
 	for j := 1; j <= b; j++ {
 		idx++
-		if err := tb.Set(value.Integer(idx), vm.Get(a+j)); err != nil {
+		if err := tb.Set(value.Integer(idx), f.Get(a+j)); err != nil {
 			return err
 		}
 	}
@@ -364,10 +364,10 @@ func (ins *Instruction) setList(vm *Frame) error {
 }
 
 // R(A) := R(B)[RK(C)]
-func(ins *Instruction) getTable(vm *Frame) error{
+func (ins *Instruction) getTable(vm *Frame) error {
 	a, b, c := ins.ABC()
 	v, err := vm.GetRK(c)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	tb, ok := vm.Get(b).(*value.Table)
@@ -375,10 +375,52 @@ func(ins *Instruction) getTable(vm *Frame) error{
 		return errInvalidOperand
 	}
 	v, err = tb.Get(v)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return vm.Set(a, v)
 }
 
+// R(A) := closure(KPROTO[Bx])
+func (ins *Instruction) closure(f *Frame) error {
+	a, bx := ins.ABx()
+	proto := f.proto.Prototypes[bx]
+	fn := &value.Function{Prototype: proto}
+	return f.Set(a, fn)
+}
 
+// return R(A), ... ,R(A+B-2)
+func (ins *Instruction) iReturn(f *Frame) error {
+	a, b, _ := ins.ABC()
+	if b == 1 {
+		return nil
+	}
+	f.returned = f.Slice(a, a+b-1)
+	return nil
+}
+
+// R(A), ... ,R(A+C-2) := R(A)(R(A+1), ... ,R(A+B-1))
+func (ins *Instruction) call(f *Frame) error {
+	a, b, c := ins.ABC()
+	args := f.Slice(a+1, a+b)
+	fn, ok := f.Get(a).(*value.Function)
+	if !ok {
+		return errInvalidOperand
+	}
+	newFrame := NewFrame(fn.Prototype)
+	// 参数传递
+	if err := newFrame.PushN(int(fn.NumParams), args...); err != nil {
+		return err
+	}
+	values, err := newFrame.execute()
+	if err != nil || len(values) != c-1 {
+		return err
+	}
+	for i := range values {
+		err = f.Set(a+i, values[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
