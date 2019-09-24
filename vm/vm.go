@@ -138,71 +138,9 @@ func (vm *LuaVM) Rotate(idx, n int) error {
 	return nil
 }
 
-func (vm *LuaVM) Arithmetic(op types.ArithmeticOperator) error {
-	binOp, ok := binaryOperators[op]
-	if ok {
-		b, err := vm.Pop()
-		if err != nil {
-			return err
-		}
-		a, err := vm.Pop()
-		if err != nil {
-			return err
-		}
-		v, ok := binOp(a, b)
-		if !ok {
-			return errInvalidOperand
-		}
-		return vm.Push(v)
-	}
-	unaryOp, ok := unaryOperators[op]
-	if ok {
-		a, err := vm.Pop()
-		if err != nil {
-			return err
-		}
-		v, ok := unaryOp(a)
-		if !ok {
-			return errInvalidOperand
-		}
-		return vm.Push(v)
-	}
-	return errInvalidOperand
-}
-
-func (vm *LuaVM) Concat(n int) error {
-	if n == 0 {
-		return vm.Push(value.String(""))
-	}
-	if n == 1 {
-		return nil
-	}
-	for i := 1; i < n; i++ {
-		s2, ok := vm.Get(-1).ToString()
-		s1, ok2 := vm.Get(-2).ToString()
-		if !ok || !ok2 {
-			return errInvalidOperand
-		}
-		if _, err := vm.PopN(2); err != nil {
-			return err
-		}
-		if err := vm.Push(value.String(s1 + s2)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func (vm *LuaVM) AddPC(i int) {
 	vm.pc += i
-}
-
-func (vm *LuaVM) LoadConst(idx int) error {
-	if idx < 0 || idx >= len(vm.proto.Constants) {
-		return errIndexOverFlow
-	}
-	v := vm.proto.Constants[idx]
-	return vm.Push(v)
 }
 
 func (vm *LuaVM) GetConst(idx int) (value.Value, error) {
@@ -216,13 +154,6 @@ func (vm *LuaVM) Fetch() code.Instruction {
 	i := vm.proto.Code[vm.pc]
 	vm.pc++
 	return i
-}
-
-func (vm *LuaVM) LoadRK(rk int) error {
-	if rk > 0xff {
-		return vm.LoadConst(rk & 0xff)
-	}
-	return vm.Push(vm.Get(rk))
 }
 
 func (vm *LuaVM) GetRK(rk int) (value.Value, error) {

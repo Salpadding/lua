@@ -7,7 +7,6 @@ import (
 
 	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/value"
-	"github.com/Salpadding/lua/types/value/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -81,12 +80,6 @@ func TestArithmetic(t *testing.T) {
 	assert.NoError(t, s.Push(value.String("2.0")))
 	assert.NoError(t, s.Push(value.String("3.0")))
 	assert.NoError(t, s.Push(value.Float(4.0)))
-	fmt.Println(s)
-	assert.NoError(t, s.Arithmetic(types.Add))
-	fmt.Println(s)
-	assert.NoError(t, s.Arithmetic(types.BitwiseNot))
-	fmt.Println(s)
-	assert.NoError(t, s.Concat(3))
 	fmt.Println(s)
 }
 
