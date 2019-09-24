@@ -280,7 +280,19 @@ func (t *Table) Type() types.Type {
 func (t *Table) value() {}
 
 func (t *Table) String() string {
-	return fmt.Sprintf("[ %s ]", common.Join(common.ToGeneral(*t.array), ", "))
+	kvs := make([]string, len(t.m))
+	i := 0
+	for k, v := range t.m {
+		kvs[i] = fmt.Sprintf("%s=%s", k, v)
+		i++
+	}
+
+	return fmt.Sprintf("{ %s }", common.Join(
+		append(
+			common.ToGeneral(*t.array),
+			common.ToGeneral(kvs)...
+		), ",",
+	))
 }
 
 func (t *Table) ToString() (string, bool) {
@@ -339,7 +351,7 @@ func (t *Table) expand() {
 	}
 }
 
-func(t *Table) Len() int{
+func (t *Table) Len() int {
 	return t.array.Len()
 }
 func (t *Table) Get(k Value) (Value, error) {

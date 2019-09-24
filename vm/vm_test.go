@@ -104,3 +104,19 @@ func TestBin(t *testing.T) {
 	}
 	assert.NoError(t, vm.execute())
 }
+
+func TestBin2(t *testing.T) {
+	f, err := os.Open("testdata/test1.o")
+	assert.NoError(t, err)
+	proto, err := chunk.ReadPrototype(f)
+	//for i := range proto.Code {
+	//	fmt.Println(proto.Code[i].OpName())
+	//}
+	assert.NoError(t, err)
+	vm := &LuaVM{
+		proto: proto,
+		pc:    0,
+	}
+	assert.NoError(t, vm.execute())
+}
+

@@ -15,10 +15,16 @@ func Join(li []interface{}, sep string) string {
 	res := make([]string, len(li))
 	for i := range res {
 		str, ok := li[i].(fmt.Stringer)
-		if !ok {
+		str1, ok2 := li[i].(string)
+		if !ok && !ok2 {
 			return ""
 		}
-		res[i] = str.String()
+		if ok {
+			res[i] = str.String()
+		}
+		if ok2 {
+			res[i] = str1
+		}
 	}
 	return strings.Join(res, sep)
 }
