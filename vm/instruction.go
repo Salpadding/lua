@@ -363,8 +363,8 @@ func (ins *Instruction) setList(f *Frame) error {
 	}
 
 	if b == 0 {
-		last, _ := f.Get(-1).ToInteger()
-		b = int(last) - a - 1
+		b = -1 - a - 1
+		
 	}
 
 	tb, ok := f.Get(a).(*types.Table)
@@ -431,7 +431,7 @@ func (ins *Instruction) call(f *Frame) error {
 		return err
 	}
 	if len(args) > int(fn.NumParams) && f.proto.IsVararg {
-		newFrame.varArgs = args[fn.NumParams+1:]
+		newFrame.varArgs = args[fn.NumParams:]
 	}
 	values, err := newFrame.execute()
 	if err != nil || len(values) != c-1 {
@@ -461,7 +461,7 @@ func (ins *Instruction) varArgs(f *Frame) error {
 		args = f.varArgs[:varArgsSize]
 	}
 	for i := 0; i < varArgsSize; i++ {
-		if a+i >= len(args) {
+		if i >= len(args) {
 			if err := f.Set(a+i, types.GetNil()); err != nil {
 				return err
 			}
