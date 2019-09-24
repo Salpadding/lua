@@ -1,3 +1,3 @@
 package vm
 
-func (vm *LuaVM) void() {}
+func (f *Frame) void() {}

@@ -44,53 +44,53 @@ var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
 	types.BitwiseNot: value.BitwiseNot,
 }
 
-// LuaVM is lua state api implementation
-type LuaVM struct {
+// Frame is lua state api implementation
+type Frame struct {
 	*Register
 	proto *chunk.Prototype
 	pc    int
 }
 
-func (vm *LuaVM) Close() {}
+func (f *Frame) Close() {}
 
-func (vm *LuaVM) Copy(dst, src int) error {
-	return vm.Set(dst, vm.Get(src))
+func (f *Frame) Copy(dst, src int) error {
+	return f.Set(dst, f.Get(src))
 }
 
-func (vm *LuaVM) Replace(idx int) error {
-	if idx == vm.GetTop() {
+func (f *Frame) Replace(idx int) error {
+	if idx == f.GetTop() {
 		return nil
 	}
-	v, err := vm.Pop()
+	v, err := f.Pop()
 	if err != nil {
 		return err
 	}
-	return vm.Set(idx, v)
+	return f.Set(idx, v)
 }
 
-func (vm *LuaVM) Insert(idx int) error {
-	return vm.Rotate(idx, 1)
+func (f *Frame) Insert(idx int) error {
+	return f.Rotate(idx, 1)
 }
 
-func (vm *LuaVM) Remove(idx int) error {
-	if err := vm.Rotate(idx, -1); err != nil {
+func (f *Frame) Remove(idx int) error {
+	if err := f.Rotate(idx, -1); err != nil {
 		return err
 	}
-	if _, err := vm.Pop(); err != nil {
+	if _, err := f.Pop(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (vm *LuaVM) SetTop(idx int) error {
-	newTop := vm.AbsIndex(idx)
+func (f *Frame) SetTop(idx int) error {
+	newTop := f.AbsIndex(idx)
 	if newTop < 0 {
 		return errors.New("stack underflow")
 	}
 
-	n := vm.GetTop() - newTop
+	n := f.GetTop() - newTop
 	if n > 0 {
-		_, err := vm.PopN(n)
+		_, err := f.PopN(n)
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func (vm *LuaVM) SetTop(idx int) error {
 	}
 	if n < 0 {
 		for i := 0; i < -n; i++ {
-			if err := vm.Push(value.GetNil()); err != nil {
+			if err := f.Push(value.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -106,74 +106,73 @@ func (vm *LuaVM) SetTop(idx int) error {
 	return nil
 }
 
-func (vm *LuaVM) TypeName(v value.Value) string {
+func (f *Frame) TypeName(v value.Value) string {
 	return v.Type().String()
 }
 
-func (vm *LuaVM) Type(idx int) types.Type {
-	if !vm.IsValid(idx) {
+func (f *Frame) Type(idx int) types.Type {
+	if !f.IsValid(idx) {
 		return types.None
 	}
-	return vm.Get(idx).Type()
+	return f.Get(idx).Type()
 }
 
-func (vm *LuaVM) Rotate(idx, n int) error {
-	t := vm.GetTop()      /* end of stack segment being rotated */
-	p := vm.AbsIndex(idx) /* start of segment */
-	var m int             /* end of prefix */
+func (f *Frame) Rotate(idx, n int) error {
+	t := f.GetTop()      /* end of stack segment being rotated */
+	p := f.AbsIndex(idx) /* start of segment */
+	var m int            /* end of prefix */
 	if n >= 0 {
 		m = t - n
 	} else {
 		m = p - n - 1
 	}
-	if err := vm.reverse(p, m); err != nil {
+	if err := f.reverse(p, m); err != nil {
 		return err
 	} /* reverse the prefix with length 'n' */
-	if err := vm.reverse(m+1, t); err != nil {
+	if err := f.reverse(m+1, t); err != nil {
 		return err
 	} /* reverse the suffix */
-	if err := vm.reverse(p, t); err != nil {
+	if err := f.reverse(p, t); err != nil {
 		return err
 	} /* reverse the entire segment */
 	return nil
 }
 
-
-func (vm *LuaVM) AddPC(i int) {
-	vm.pc += i
+func (f *Frame) AddPC(i int) {
+	f.pc += i
 }
 
-func (vm *LuaVM) GetConst(idx int) (value.Value, error) {
-	if idx < 0 || idx >= len(vm.proto.Constants) {
+func (f *Frame) GetConst(idx int) (value.Value, error) {
+	if idx < 0 || idx >= len(f.proto.Constants) {
 		return nil, errIndexOverFlow
 	}
-	return vm.proto.Constants[idx], nil
+	return f.proto.Constants[idx], nil
 }
 
-func (vm *LuaVM) Fetch() code.Instruction {
-	i := vm.proto.Code[vm.pc]
-	vm.pc++
+func (f *Frame) Fetch() code.Instruction {
+	i := f.proto.Code[f.pc]
+	f.pc++
 	return i
 }
 
-func (vm *LuaVM) GetRK(rk int) (value.Value, error) {
+func (f *Frame) GetRK(rk int) (value.Value, error) {
 	if rk > 0xff {
-		return vm.GetConst(rk & 0xff)
+		return f.GetConst(rk & 0xff)
 	}
-	return vm.Get(rk), nil
+	return f.Get(rk), nil
 }
 
-func (vm *LuaVM) execute() error {
-	vm.Register = NewRegister(0)
+func (f *Frame) execute() error {
+	f.Register = NewRegister(0)
 	for {
-		ins := &Instruction{Instruction: vm.Fetch()}
+		ins := &Instruction{Instruction: f.Fetch()}
 		if ins.Opcode().Type == code.Return {
 			break
 		}
-		if err := ins.execute(vm); err != nil {
+		if err := ins.execute(f); err != nil {
 			return err
 		}
-		fmt.Printf("%s %s\n", ins.Opcode().Name, vm)
+		fmt.Printf("%s %s\n", ins.Opcode().Name, f)
 	}
 	return nil
 }

@@ -44,12 +44,12 @@ type Instruction struct {
 }
 
 // R(A) := R(B)
-func (ins *Instruction) move(vm *LuaVM) error {
+func (ins *Instruction) move(vm *Frame) error {
 	dst, src, _ := ins.ABC()
 	return vm.Copy(dst, src)
 }
 
-func (ins *Instruction) jmp(vm *LuaVM) error {
+func (ins *Instruction) jmp(vm *Frame) error {
 	a, sBx := ins.AsBx()
 	vm.AddPC(sBx)
 	if a != 0 {
@@ -58,7 +58,7 @@ func (ins *Instruction) jmp(vm *LuaVM) error {
 	return nil
 }
 
-func (ins *Instruction) execute(vm *LuaVM) error {
+func (ins *Instruction) execute(vm *Frame) error {
 	_, ok := opMapping[ins.Opcode().Type]
 	if ok {
 		return ins.arithmetic(vm)
@@ -107,7 +107,7 @@ func (ins *Instruction) execute(vm *LuaVM) error {
 }
 
 // R(A), R(A+1), ..., R(A+B) := nil
-func (ins *Instruction) loadNil(vm *LuaVM) error {
+func (ins *Instruction) loadNil(vm *Frame) error {
 	a, b, _ := ins.ABC()
 	for i := a; i <= a+b; i++ {
 		if err := vm.Set(i, value.GetNil()); err != nil {
@@ -118,7 +118,7 @@ func (ins *Instruction) loadNil(vm *LuaVM) error {
 }
 
 // R(A) := (bool)B; if (C) pc++
-func (ins *Instruction) loadBool(vm *LuaVM) error {
+func (ins *Instruction) loadBool(vm *Frame) error {
 	a, b, c := ins.ABC()
 	if err := vm.Set(a, value.Boolean(b != 0)); err != nil {
 		return err
@@ -130,7 +130,7 @@ func (ins *Instruction) loadBool(vm *LuaVM) error {
 }
 
 // R(A) := Kst(Bx)
-func (ins *Instruction) loadK(vm *LuaVM) error {
+func (ins *Instruction) loadK(vm *Frame) error {
 	a, bx := ins.ABx()
 	v, err := vm.GetConst(bx)
 	if err != nil {
@@ -140,7 +140,7 @@ func (ins *Instruction) loadK(vm *LuaVM) error {
 }
 
 // R(A) := Kst(extra arg)
-func (ins *Instruction) loadKx(vm *LuaVM) error {
+func (ins *Instruction) loadKx(vm *Frame) error {
 	a, _ := ins.ABx()
 	ax := vm.Fetch().Ax()
 	v, err := vm.GetConst(ax)
@@ -150,7 +150,7 @@ func (ins *Instruction) loadKx(vm *LuaVM) error {
 	return vm.Set(a, v)
 }
 
-func (ins *Instruction) arithmetic(vm *LuaVM) error {
+func (ins *Instruction) arithmetic(vm *Frame) error {
 	op, _ := opMapping[ins.Opcode().Type]
 	_, ok := binaryOperators[op]
 	if ok {
@@ -160,7 +160,7 @@ func (ins *Instruction) arithmetic(vm *LuaVM) error {
 }
 
 // R(A) := RK(B) op RK(C)
-func (ins *Instruction) binaryArithmetic(vm *LuaVM) error {
+func (ins *Instruction) binaryArithmetic(vm *Frame) error {
 	a, b, c := ins.ABC()
 	op, _ := opMapping[ins.Opcode().Type]
 	fn, _ := binaryOperators[op]
@@ -180,7 +180,7 @@ func (ins *Instruction) binaryArithmetic(vm *LuaVM) error {
 }
 
 // R(A) := op R(B)
-func (ins *Instruction) unaryArithmetic(vm *LuaVM) error {
+func (ins *Instruction) unaryArithmetic(vm *Frame) error {
 	a, b, _ := ins.ABC()
 	op, _ := opMapping[ins.Opcode().Type]
 	fn, _ := unaryOperators[op]
@@ -196,7 +196,7 @@ func (ins *Instruction) unaryArithmetic(vm *LuaVM) error {
 }
 
 // R(A) := length of R(B)
-func (ins *Instruction) len(vm *LuaVM) error {
+func (ins *Instruction) len(vm *Frame) error {
 	a, b, _ := ins.ABC()
 	length, ok := value.Len(vm.Get(b))
 	if !ok {
@@ -206,7 +206,7 @@ func (ins *Instruction) len(vm *LuaVM) error {
 }
 
 // R(A) := R(B).. ... ..R(C)
-func (ins *Instruction) concat(vm *LuaVM) error {
+func (ins *Instruction) concat(vm *Frame) error {
 	a, b, c := ins.ABC()
 	var str bytes.Buffer
 	for i := b; i <= c; i++ {
@@ -220,7 +220,7 @@ func (ins *Instruction) concat(vm *LuaVM) error {
 }
 
 // if ((RK(B) op RK(C)) ~= A) then pc++
-func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
+func (ins *Instruction) compare(vm *Frame, comparison types.Comparison) error {
 	var (
 		cmp types.Comparison
 		ok  bool
@@ -250,13 +250,13 @@ func (ins *Instruction) compare(vm *LuaVM, comparison types.Comparison) error {
 }
 
 // R(A) := not R(B)
-func (ins *Instruction) not(vm *LuaVM) error {
+func (ins *Instruction) not(vm *Frame) error {
 	a, b, _ := ins.ABC()
 	return vm.Set(a, !vm.Get(b).ToBoolean())
 }
 
 // if (R(B) <=> C) then R(A) := R(B) else pc++
-func (ins *Instruction) testSet(vm *LuaVM) error {
+func (ins *Instruction) testSet(vm *Frame) error {
 	a, b, c := ins.ABC()
 	if vm.Get(b).ToBoolean() == (c != 0) {
 		return vm.Copy(a, b)
@@ -266,7 +266,7 @@ func (ins *Instruction) testSet(vm *LuaVM) error {
 }
 
 // if not (R(A) <=> C) then pc++
-func (ins *Instruction) test(vm *LuaVM) error {
+func (ins *Instruction) test(vm *Frame) error {
 	a, _, c := ins.ABC()
 	if vm.Get(a).ToBoolean() != (c != 0) {
 		vm.AddPC(1)
@@ -275,7 +275,7 @@ func (ins *Instruction) test(vm *LuaVM) error {
 }
 
 // R(A)-=R(A+2); pc+=sBx
-func (ins *Instruction) forPrep(vm *LuaVM) error {
+func (ins *Instruction) forPrep(vm *Frame) error {
 	a, sBx := ins.AsBx()
 	v, ok := value.Sub(vm.Get(a), vm.Get(a+2))
 	if !ok {
@@ -292,7 +292,7 @@ func (ins *Instruction) forPrep(vm *LuaVM) error {
 // if R(A) <?= R(A+1) then {
 //   pc+=sBx; R(A+3)=R(A)
 // }
-func (ins *Instruction) forLoop(vm *LuaVM) error {
+func (ins *Instruction) forLoop(vm *Frame) error {
 	a, sBx := ins.AsBx()
 	var expect types.Comparison
 	v, ok := value.Add(vm.Get(a), vm.Get(a+2))
@@ -318,13 +318,13 @@ func (ins *Instruction) forLoop(vm *LuaVM) error {
 }
 
 // R(A) := {} (size = B, C)
-func (ins *Instruction) newTable(vm *LuaVM) error {
+func (ins *Instruction) newTable(vm *Frame) error {
 	a, _, _ := ins.ABC()
 	return vm.Set(a, value.NewTable())
 }
 
 // R(A) [RK(B)] := RK(C)
-func (ins *Instruction) setTable(vm *LuaVM) error {
+func (ins *Instruction) setTable(vm *Frame) error {
 	a, b, c := ins.ABC()
 	v1, err := vm.GetRK(b)
 	if err != nil {
@@ -342,7 +342,7 @@ func (ins *Instruction) setTable(vm *LuaVM) error {
 }
 
 // R(A)[(C-1)*FPF+i] := R(A+i), 1 <= i <= B
-func (ins *Instruction) setList(vm *LuaVM) error {
+func (ins *Instruction) setList(vm *Frame) error {
 	a, b, c := ins.ABC()
 	if c > 0 {
 		c--
@@ -364,7 +364,7 @@ func (ins *Instruction) setList(vm *LuaVM) error {
 }
 
 // R(A) := R(B)[RK(C)]
-func(ins *Instruction) getTable(vm *LuaVM) error{
+func(ins *Instruction) getTable(vm *Frame) error{
 	a, b, c := ins.ABC()
 	v, err := vm.GetRK(c)
 	if err != nil{

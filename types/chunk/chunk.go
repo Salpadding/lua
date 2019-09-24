@@ -26,7 +26,7 @@ type Prototype struct {
 	Prototypes      []*Prototype
 	LineInfo        []uint32         // debug
 	LocalVariables  []*LocalVariable // debug
-	UpvalueNames    []string         // debug
+	UpValueNames    []string         // debug
 }
 
 type Chunk struct {
@@ -167,7 +167,7 @@ func (b *ByteCodeReader) ReadPrototype() (*Prototype, error) {
 	if res.LocalVariables, err = b.readLocalVariables(); err != nil {
 		return nil, err
 	}
-	if res.UpvalueNames, err = b.readUpValueNames(); err != nil {
+	if res.UpValueNames, err = b.readUpValueNames(); err != nil {
 		return nil, err
 	}
 	return res, nil

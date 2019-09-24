@@ -35,7 +35,7 @@ func TestIndex(t *testing.T) {
 }
 
 func TestStack(t *testing.T) {
-	s := &LuaVM{Register: NewRegister(0)}
+	s := &Frame{Register: NewRegister(0)}
 	if err := s.Push(value.Boolean(true)); err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestArithmetic(t *testing.T) {
-	s := &LuaVM{Register: NewRegister(256)}
+	s := &Frame{Register: NewRegister(256)}
 	assert.NoError(t, s.Push(value.Integer(1)))
 	assert.NoError(t, s.Push(value.String("2.0")))
 	assert.NoError(t, s.Push(value.String("3.0")))
@@ -91,7 +91,7 @@ func TestBin(t *testing.T) {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	vm := &LuaVM{
+	vm := &Frame{
 		proto: proto,
 		pc:    0,
 	}
@@ -106,7 +106,7 @@ func TestBin2(t *testing.T) {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	vm := &LuaVM{
+	vm := &Frame{
 		proto: proto,
 		pc:    0,
 	}
