@@ -5,17 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Salpadding/lua/types/value"
+	"github.com/Salpadding/lua/types"
 )
 
 type Stack struct {
-	slots []value.Value
+	slots []types.Value
 	top   int
 	pc    int
 	prev  *Stack
 }
 
-func (s *Stack) Push(val value.Value) error {
+func (s *Stack) Push(val types.Value) error {
 	if s.top == len(s.slots) {
 		return errors.New("stack over flow")
 	}
@@ -25,10 +25,10 @@ func (s *Stack) Push(val value.Value) error {
 }
 
 func (s *Stack) PushNil() error {
-	return s.Push(value.GetNil())
+	return s.Push(types.GetNil())
 }
 
-func (s *Stack) Pop() (value.Value, error) {
+func (s *Stack) Pop() (types.Value, error) {
 	if s.top == 0 {
 		return nil, errors.New("stack underflow")
 	}
@@ -36,13 +36,13 @@ func (s *Stack) Pop() (value.Value, error) {
 	return s.slots[s.top], nil
 }
 
-func (s *Stack) PushN(values []value.Value, n int) error {
+func (s *Stack) PushN(values []types.Value, n int) error {
 	if n < 0 {
 		n = len(values)
 	}
 	for i := 0; i < n; i++ {
 		if i >= len(values) {
-			if err := s.Push(value.GetNil()); err != nil {
+			if err := s.Push(types.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -53,8 +53,8 @@ func (s *Stack) PushN(values []value.Value, n int) error {
 	return nil
 }
 
-func (s *Stack) PopN(n int) ([]value.Value, error) {
-	values := make([]value.Value, n)
+func (s *Stack) PopN(n int) ([]types.Value, error) {
+	values := make([]types.Value, n)
 	var err error
 	for i := n - 1; i >= 0; i-- {
 		values[i], err = s.Pop()
@@ -67,7 +67,7 @@ func (s *Stack) PopN(n int) ([]value.Value, error) {
 
 func NewStack(size int) *Stack {
 	return &Stack{
-		slots: make([]value.Value, size),
+		slots: make([]types.Value, size),
 		top:   0,
 		pc:    0,
 	}
@@ -78,7 +78,7 @@ func (s *Stack) Check(n int) {
 	if free >= n {
 		return
 	}
-	slots := make([]value.Value, len(s.slots)+n)
+	slots := make([]types.Value, len(s.slots)+n)
 	copy(slots, s.slots)
 	s.slots = slots
 }
@@ -97,15 +97,15 @@ func (s *Stack) IsValid(idx int) bool {
 	return idx <= s.top && idx > 0
 }
 
-func (s *Stack) Get(idx int) value.Value {
+func (s *Stack) Get(idx int) types.Value {
 	idx = s.AbsIndex(idx)
 	if s.IsValid(idx) {
 		return s.slots[idx-1]
 	}
-	return value.GetNil()
+	return types.GetNil()
 }
 
-func (s *Stack) Set(idx int, val value.Value) error {
+func (s *Stack) Set(idx int, val types.Value) error {
 	idx = s.AbsIndex(idx)
 	if s.IsValid(idx) {
 		s.slots[idx-1] = val

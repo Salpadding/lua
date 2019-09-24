@@ -5,22 +5,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Salpadding/lua/types/value"
+	"github.com/Salpadding/lua/types"
 )
 
-type Register []value.Value
+type Register []types.Value
 
 func NewRegister(cap int) *Register {
 	res := make(Register, 0, cap)
 	return &res
 }
 
-func (r *Register) Push(v value.Value) error {
+func (r *Register) Push(v types.Value) error {
 	*r = append(*r, v)
 	return nil
 }
 
-func (r *Register) Pop() (value.Value, error) {
+func (r *Register) Pop() (types.Value, error) {
 	if len(*r) == 0 {
 		return nil, errors.New("index overflow")
 	}
@@ -29,13 +29,13 @@ func (r *Register) Pop() (value.Value, error) {
 	return last, nil
 }
 
-func (r *Register) PushN(n int, values ...value.Value) error {
+func (r *Register) PushN(n int, values ...types.Value) error {
 	if n < 0 {
 		n = len(values)
 	}
 	for i := 0; i < n; i++ {
 		if i >= len(values) {
-			if err := r.Push(value.GetNil()); err != nil {
+			if err := r.Push(types.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -46,8 +46,8 @@ func (r *Register) PushN(n int, values ...value.Value) error {
 	return nil
 }
 
-func (r *Register) PopN(n int) ([]value.Value, error) {
-	values := make([]value.Value, n)
+func (r *Register) PopN(n int) ([]types.Value, error) {
+	values := make([]types.Value, n)
 	var err error
 	for i := n - 1; i >= 0; i-- {
 		values[i], err = r.Pop()
@@ -74,21 +74,21 @@ func (r *Register) IsValid(idx int) bool {
 	return idx < len(*r) && idx >= 0
 }
 
-func (r *Register) Get(idx int) value.Value {
+func (r *Register) Get(idx int) types.Value {
 	idx = r.AbsIndex(idx)
 	if r.IsValid(idx) {
 		return (*r)[idx]
 	}
-	return value.GetNil()
+	return types.GetNil()
 }
 
-func (r *Register) Set(idx int, v value.Value) error {
+func (r *Register) Set(idx int, v types.Value) error {
 	idx = r.AbsIndex(idx)
 	if idx < 0 {
 		return errors.New("stack set fail, invalid index")
 	}
 	for idx >= len(*r) {
-		if err := r.Push(value.GetNil()); err != nil {
+		if err := r.Push(types.GetNil()); err != nil {
 			return err
 		}
 	}
@@ -120,8 +120,8 @@ func (r *Register) String() string {
 	return buf.String()
 }
 
-func(r *Register) Slice(start, end int) []value.Value{
-	res := make([]value.Value, end - start)
+func(r *Register) Slice(start, end int) []types.Value {
+	res := make([]types.Value, end - start)
 	for i := range res {
 		res[i] = r.Get(start + i)
 	}

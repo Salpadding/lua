@@ -1,4 +1,4 @@
-package chunk
+package types
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 )
 
 func Test(t *testing.T) {
-	f, err := os.Open("../testdata/hello_world.o")
+	f, err := os.Open("./testdata/hello_world.o")
 	if err != nil {
 		t.Error(err)
 	}
@@ -21,7 +21,7 @@ func Test(t *testing.T) {
 }
 
 func Test2(t *testing.T) {
-	f, err := os.Open("../testdata/hello_world.o")
+	f, err := os.Open("./testdata/hello_world.o")
 	if err != nil {
 		t.Error(err)
 	}

@@ -1,4 +1,4 @@
-package value
+package types
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/Salpadding/lua/types/chunk"
 	"github.com/Salpadding/lua/types/value/types"
 
 	"github.com/Salpadding/lua/common"
@@ -380,7 +379,7 @@ func (t *Table) Get(k Value) (Value, error) {
 }
 
 type Function struct {
-	*chunk.Prototype
+	*Prototype
 }
 
 func (f *Function) ToFloat() (Float, bool) {

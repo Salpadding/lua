@@ -3,7 +3,7 @@ package vm
 import (
 	"io"
 
-	"github.com/Salpadding/lua/types/chunk"
+	"github.com/Salpadding/lua/types"
 )
 
 type LuaVM struct {
@@ -11,7 +11,7 @@ type LuaVM struct {
 }
 
 func (vm *LuaVM) Load(rd io.Reader) error {
-	proto, err := chunk.ReadPrototype(rd)
+	proto, err := types.ReadPrototype(rd)
 	if err != nil {
 		return err
 	}

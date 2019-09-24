@@ -1,4 +1,4 @@
-package value
+package types
 
 import (
 	"math"
@@ -77,7 +77,7 @@ func Mul(a, b Value) (Value, bool) {
 		return ai * bi, true
 	}
 	af, ok := a.ToFloat()
-	bf, ok2 := b.ToFloat()
+	bf, ok2 := a.ToFloat()
 	if !ok || !ok2 {
 		return nil, false
 	}

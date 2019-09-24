@@ -5,14 +5,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Salpadding/lua/types/chunk"
-	"github.com/Salpadding/lua/types/value"
+	"github.com/Salpadding/lua/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRegister(t *testing.T) {
 	r := NewRegister(0)
-	assert.NoError(t, r.Push(value.String("hello world")))
+	assert.NoError(t, r.Push(types.String("hello world")))
 	v, err := r.Pop()
 	assert.NoError(t, err)
 	fmt.Println(v)
@@ -22,37 +21,37 @@ func TestNewRegister(t *testing.T) {
 
 func TestIndex(t *testing.T) {
 	r := NewRegister(64)
-	assert.NoError(t, r.Push(value.String("hello world")))
+	assert.NoError(t, r.Push(types.String("hello world")))
 	idx := r.AbsIndex(-1)
 	assert.Equal(t, 0, idx)
 	v := r.Get(0)
-	_, ok := v.(*value.Nil)
+	_, ok := v.(*types.Nil)
 	assert.False(t, ok)
-	assert.NoError(t, r.Set(0, value.Float(1.2)))
+	assert.NoError(t, r.Set(0, types.Float(1.2)))
 	v = r.Get(0)
-	_, ok = v.(value.Float)
+	_, ok = v.(types.Float)
 	assert.True(t, ok)
 }
 
 func TestStack(t *testing.T) {
 	s := &Frame{Register: NewRegister(0)}
-	if err := s.Push(value.Boolean(true)); err != nil {
+	if err := s.Push(types.Boolean(true)); err != nil {
 		t.Error(err)
 	}
 	fmt.Println(s)
-	if err := s.Push(value.Integer(10)); err != nil {
+	if err := s.Push(types.Integer(10)); err != nil {
 		t.Error(err)
 	}
 	fmt.Println(s)
-	if err := s.Push(value.GetNil()); err != nil {
+	if err := s.Push(types.GetNil()); err != nil {
 		t.Error(err)
 	}
 	fmt.Println(s)
-	if err := s.Push(value.String("hello")); err != nil {
+	if err := s.Push(types.String("hello")); err != nil {
 		t.Error(err)
 	}
 	fmt.Println(s)
-	if err := s.Push(value.Integer(-4)); err != nil {
+	if err := s.Push(types.Integer(-4)); err != nil {
 		t.Error(err)
 	}
 	fmt.Println(s)
@@ -76,40 +75,42 @@ func TestStack(t *testing.T) {
 
 func TestArithmetic(t *testing.T) {
 	s := &Frame{Register: NewRegister(256)}
-	assert.NoError(t, s.Push(value.Integer(1)))
-	assert.NoError(t, s.Push(value.String("2.0")))
-	assert.NoError(t, s.Push(value.String("3.0")))
-	assert.NoError(t, s.Push(value.Float(4.0)))
+	assert.NoError(t, s.Push(types.Integer(1)))
+	assert.NoError(t, s.Push(types.String("2.0")))
+	assert.NoError(t, s.Push(types.String("3.0")))
+	assert.NoError(t, s.Push(types.Float(4.0)))
 	fmt.Println(s)
 }
 
 func TestBin(t *testing.T) {
 	f, err := os.Open("testdata/luac.out")
 	assert.NoError(t, err)
-	proto, err := chunk.ReadPrototype(f)
+	proto, err := types.ReadPrototype(f)
 	//for i := range proto.Code {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	vm := &Frame{
+	frame := &Frame{
 		proto: proto,
 		pc:    0,
 	}
-	assert.NoError(t, vm.execute())
+	_, err = frame.execute()
+	assert.NoError(t, err)
 }
 
 func TestBin2(t *testing.T) {
 	f, err := os.Open("testdata/test1.o")
 	assert.NoError(t, err)
-	proto, err := chunk.ReadPrototype(f)
+	proto, err := types.ReadPrototype(f)
 	//for i := range proto.Code {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	vm := &Frame{
+	frame := &Frame{
 		proto: proto,
 		pc:    0,
 	}
-	assert.NoError(t, vm.execute())
+	_, err = frame.execute()
+	assert.NoError(t, err)
 }
 

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"errors"
 
+	types2 "github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
-	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
 )
 
@@ -110,7 +110,7 @@ func (ins *Instruction) execute(vm *Frame) error {
 func (ins *Instruction) loadNil(vm *Frame) error {
 	a, b, _ := ins.ABC()
 	for i := a; i <= a+b; i++ {
-		if err := vm.Set(i, value.GetNil()); err != nil {
+		if err := vm.Set(i, types2.GetNil()); err != nil {
 			return err
 		}
 	}
@@ -120,7 +120,7 @@ func (ins *Instruction) loadNil(vm *Frame) error {
 // R(A) := (bool)B; if (C) pc++
 func (ins *Instruction) loadBool(vm *Frame) error {
 	a, b, c := ins.ABC()
-	if err := vm.Set(a, value.Boolean(b != 0)); err != nil {
+	if err := vm.Set(a, types2.Boolean(b != 0)); err != nil {
 		return err
 	}
 	if c != 0 {
@@ -198,7 +198,7 @@ func (ins *Instruction) unaryArithmetic(vm *Frame) error {
 // R(A) := length of R(B)
 func (ins *Instruction) len(vm *Frame) error {
 	a, b, _ := ins.ABC()
-	length, ok := value.Len(vm.Get(b))
+	length, ok := types2.Len(vm.Get(b))
 	if !ok {
 		return errInvalidOperand
 	}
@@ -216,7 +216,7 @@ func (ins *Instruction) concat(vm *Frame) error {
 		}
 		str.WriteString(s)
 	}
-	return vm.Set(a, value.String(str.String()))
+	return vm.Set(a, types2.String(str.String()))
 }
 
 // if ((RK(B) op RK(C)) ~= A) then pc++
@@ -235,9 +235,9 @@ func (ins *Instruction) compare(vm *Frame, comparison types.Comparison) error {
 		return err
 	}
 	if comparison == types.Equal {
-		cmp, ok = value.Equal(v1, v2)
+		cmp, ok = types2.Equal(v1, v2)
 	} else {
-		cmp, ok = value.Compare(v1, v2)
+		cmp, ok = types2.Compare(v1, v2)
 	}
 	if !ok {
 		return errInvalidOperand
@@ -277,7 +277,7 @@ func (ins *Instruction) test(vm *Frame) error {
 // R(A)-=R(A+2); pc+=sBx
 func (ins *Instruction) forPrep(vm *Frame) error {
 	a, sBx := ins.AsBx()
-	v, ok := value.Sub(vm.Get(a), vm.Get(a+2))
+	v, ok := types2.Sub(vm.Get(a), vm.Get(a+2))
 	if !ok {
 		return errInvalidOperand
 	}
@@ -295,7 +295,7 @@ func (ins *Instruction) forPrep(vm *Frame) error {
 func (ins *Instruction) forLoop(vm *Frame) error {
 	a, sBx := ins.AsBx()
 	var expect types.Comparison
-	v, ok := value.Add(vm.Get(a), vm.Get(a+2))
+	v, ok := types2.Add(vm.Get(a), vm.Get(a+2))
 	if !ok {
 		return errInvalidOperand
 	}
@@ -304,7 +304,7 @@ func (ins *Instruction) forLoop(vm *Frame) error {
 	}
 	num, _ := vm.Get(a + 2).ToFloat()
 	v1, v2 := vm.Get(a), vm.Get(a+1)
-	cmp, _ := value.Compare(v1, v2)
+	cmp, _ := types2.Compare(v1, v2)
 	if num >= 0 {
 		expect = types.LessThanOrEqual
 	} else {
@@ -320,7 +320,7 @@ func (ins *Instruction) forLoop(vm *Frame) error {
 // R(A) := {} (size = B, C)
 func (ins *Instruction) newTable(vm *Frame) error {
 	a, _, _ := ins.ABC()
-	return vm.Set(a, value.NewTable())
+	return vm.Set(a, types2.NewTable())
 }
 
 // R(A) [RK(B)] := RK(C)
@@ -334,7 +334,7 @@ func (ins *Instruction) setTable(vm *Frame) error {
 	if err != nil {
 		return err
 	}
-	tb, ok := vm.Get(a).(*value.Table)
+	tb, ok := vm.Get(a).(*types2.Table)
 	if !ok {
 		return errInvalidOperand
 	}
@@ -349,14 +349,14 @@ func (ins *Instruction) setList(f *Frame) error {
 	} else {
 		c = f.Fetch().Ax()
 	}
-	tb, ok := f.Get(a).(*value.Table)
+	tb, ok := f.Get(a).(*types2.Table)
 	if !ok {
 		return errInvalidOperand
 	}
 	idx := c * fieldsPerFlush
 	for j := 1; j <= b; j++ {
 		idx++
-		if err := tb.Set(value.Integer(idx), f.Get(a+j)); err != nil {
+		if err := tb.Set(types2.Integer(idx), f.Get(a+j)); err != nil {
 			return err
 		}
 	}
@@ -370,7 +370,7 @@ func (ins *Instruction) getTable(vm *Frame) error {
 	if err != nil {
 		return err
 	}
-	tb, ok := vm.Get(b).(*value.Table)
+	tb, ok := vm.Get(b).(*types2.Table)
 	if !ok {
 		return errInvalidOperand
 	}
@@ -385,7 +385,7 @@ func (ins *Instruction) getTable(vm *Frame) error {
 func (ins *Instruction) closure(f *Frame) error {
 	a, bx := ins.ABx()
 	proto := f.proto.Prototypes[bx]
-	fn := &value.Function{Prototype: proto}
+	fn := &types2.Function{Prototype: proto}
 	return f.Set(a, fn)
 }
 
@@ -403,7 +403,7 @@ func (ins *Instruction) iReturn(f *Frame) error {
 func (ins *Instruction) call(f *Frame) error {
 	a, b, c := ins.ABC()
 	args := f.Slice(a+1, a+b)
-	fn, ok := f.Get(a).(*value.Function)
+	fn, ok := f.Get(a).(*types2.Function)
 	if !ok {
 		return errInvalidOperand
 	}

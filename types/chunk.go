@@ -1,4 +1,4 @@
-package chunk
+package types
 
 import (
 	"bytes"
@@ -8,8 +8,6 @@ import (
 	"math"
 
 	"github.com/Salpadding/lua/types/code"
-	"github.com/Salpadding/lua/types/value"
-
 	"github.com/Salpadding/lua/types/tag"
 )
 
@@ -21,7 +19,7 @@ type Prototype struct {
 	IsVararg        byte
 	MaxStackSize    byte
 	Code            []code.Instruction
-	Constants       []value.Value
+	Constants       []Value
 	UpValues        []UpValue
 	Prototypes      []*Prototype
 	LineInfo        []uint32         // debug
@@ -189,12 +187,12 @@ func (b *ByteCodeReader) readCode() ([]code.Instruction, error) {
 	return codes, nil
 }
 
-func (b *ByteCodeReader) readConstants() ([]value.Value, error) {
+func (b *ByteCodeReader) readConstants() ([]Value, error) {
 	size, err := b.ReadUint32()
 	if err != nil {
 		return nil, err
 	}
-	constants := make([]value.Value, size)
+	constants := make([]Value, size)
 	for i := range constants {
 		constants[i], err = b.readConstant()
 		if err != nil {
@@ -204,38 +202,38 @@ func (b *ByteCodeReader) readConstants() ([]value.Value, error) {
 	return constants, nil
 }
 
-func (b *ByteCodeReader) readConstant() (value.Value, error) {
+func (b *ByteCodeReader) readConstant() (Value, error) {
 	t, err := b.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 	switch t {
 	case tag.Nil:
-		return value.GetNil(), nil
+		return GetNil(), nil
 	case tag.Boolean:
 		n, err := b.ReadByte()
 		if err != nil {
 			return nil, err
 		}
-		return value.Boolean(n != 0), nil
+		return Boolean(n != 0), nil
 	case tag.Number:
 		i, err := b.ReadFloat()
 		if err != nil {
 			return nil, err
 		}
-		return value.Float(i), nil
+		return Float(i), nil
 	case tag.Integer:
 		i, err := b.ReadInt()
 		if err != nil {
 			return nil, err
 		}
-		return value.Integer(i), nil
+		return Integer(i), nil
 	case tag.ShortString, tag.LongString:
 		str, err := b.ReadString()
 		if err != nil {
 			return nil, err
 		}
-		return value.String(str), nil
+		return String(str), nil
 	default:
 		return nil, errors.New("unsupported constant type")
 	}

@@ -3,9 +3,8 @@ package vm
 import (
 	"errors"
 
-	"github.com/Salpadding/lua/types/chunk"
+	types2 "github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
-	"github.com/Salpadding/lua/types/value"
 	"github.com/Salpadding/lua/types/value/types"
 )
 
@@ -19,39 +18,39 @@ const (
 	LuaRelease = LuaVersion + "." + LuaVersionRelease
 )
 
-type BinaryOperator func(a, b value.Value) (value.Value, bool)
+type BinaryOperator func(a, b types2.Value) (types2.Value, bool)
 
-type UnaryOperator func(a value.Value) (value.Value, bool)
+type UnaryOperator func(a types2.Value) (types2.Value, bool)
 
 var binaryOperators = map[types.ArithmeticOperator]BinaryOperator{
-	types.Add:        value.Add,
-	types.Sub:        value.Sub,
-	types.Mul:        value.Mul,
-	types.IDiv:       value.IDiv,
-	types.Mod:        value.Mod,
-	types.Pow:        value.Pow,
-	types.Div:        value.Div,
-	types.BitwiseAnd: value.BitwiseAnd,
-	types.BitwiseXor: value.BitwiseXor,
-	types.BitwiseOr:  value.BitwiseOr,
-	types.ShiftLeft:  value.ShiftLeft,
-	types.ShiftRight: value.ShiftRight,
+	types.Add:        types2.Add,
+	types.Sub:        types2.Sub,
+	types.Mul:        types2.Mul,
+	types.IDiv:       types2.IDiv,
+	types.Mod:        types2.Mod,
+	types.Pow:        types2.Pow,
+	types.Div:        types2.Div,
+	types.BitwiseAnd: types2.BitwiseAnd,
+	types.BitwiseXor: types2.BitwiseXor,
+	types.BitwiseOr:  types2.BitwiseOr,
+	types.ShiftLeft:  types2.ShiftLeft,
+	types.ShiftRight: types2.ShiftRight,
 }
 
 var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
-	types.UnaryMinus: value.UnaryMinus,
-	types.BitwiseNot: value.BitwiseNot,
+	types.UnaryMinus: types2.UnaryMinus,
+	types.BitwiseNot: types2.BitwiseNot,
 }
 
 // Frame 是函数调用帧
 type Frame struct {
 	*Register
-	proto    *chunk.Prototype
+	proto    *types2.Prototype
 	pc       int
-	returned []value.Value
+	returned []types2.Value
 }
 
-func NewFrame(prototype *chunk.Prototype) *Frame {
+func NewFrame(prototype *types2.Prototype) *Frame {
 	return &Frame{
 		Register: &Register{},
 		proto:    prototype,
@@ -106,7 +105,7 @@ func (f *Frame) SetTop(idx int) error {
 	}
 	if n < 0 {
 		for i := 0; i < -n; i++ {
-			if err := f.Push(value.GetNil()); err != nil {
+			if err := f.Push(types2.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -114,7 +113,7 @@ func (f *Frame) SetTop(idx int) error {
 	return nil
 }
 
-func (f *Frame) TypeName(v value.Value) string {
+func (f *Frame) TypeName(v types2.Value) string {
 	return v.Type().String()
 }
 
@@ -150,7 +149,7 @@ func (f *Frame) AddPC(i int) {
 	f.pc += i
 }
 
-func (f *Frame) GetConst(idx int) (value.Value, error) {
+func (f *Frame) GetConst(idx int) (types2.Value, error) {
 	if idx < 0 || idx >= len(f.proto.Constants) {
 		return nil, errIndexOverFlow
 	}
@@ -163,14 +162,14 @@ func (f *Frame) Fetch() code.Instruction {
 	return i
 }
 
-func (f *Frame) GetRK(rk int) (value.Value, error) {
+func (f *Frame) GetRK(rk int) (types2.Value, error) {
 	if rk > 0xff {
 		return f.GetConst(rk & 0xff)
 	}
 	return f.Get(rk), nil
 }
 
-func (f *Frame) execute() ([]value.Value, error) {
+func (f *Frame) execute() ([]types2.Value, error) {
 	f.Register = NewRegister(0)
 	for {
 		ins := &Instruction{Instruction: f.Fetch()}

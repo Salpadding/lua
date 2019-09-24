@@ -1,4 +1,4 @@
-package chunk
+package types
 
 const (
 	LuaSignature    = "\x1bLua"
