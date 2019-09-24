@@ -7,16 +7,15 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/Salpadding/lua/types/value/types"
-
 	"github.com/Salpadding/lua/common"
+	"github.com/Salpadding/lua/types/value"
 )
 
 type Value interface {
 	value()
 	// String is stringer for debug
 	String() string
-	Type() types.Type
+	Type() value.Type
 	ToNumber() (Number, bool)
 	ToInteger() (Integer, bool)
 	ToFloat() (Float, bool)
@@ -57,8 +56,8 @@ func (n *None) ToInteger() (Integer, bool) {
 	return 0, false
 }
 
-func (n *None) Type() types.Type {
-	return types.None
+func (n *None) Type() value.Type {
+	return value.None
 }
 
 func (n *None) ToBoolean() Boolean {
@@ -81,8 +80,8 @@ func (n *Nil) String() string {
 	return "nil"
 }
 
-func (n *Nil) Type() types.Type {
-	return types.Nil
+func (n *Nil) Type() value.Type {
+	return value.Nil
 }
 
 func (n *Nil) ToNumber() (Number, bool) {
@@ -109,8 +108,8 @@ func (b Boolean) ToString() (string, bool) {
 
 func (b Boolean) value() {}
 
-func (b Boolean) Type() types.Type {
-	return types.Boolean
+func (b Boolean) Type() value.Type {
+	return value.Boolean
 }
 
 func (b Boolean) String() string {
@@ -151,8 +150,8 @@ func (f Float) ToString() (string, bool) {
 
 func (f Float) value() {}
 
-func (f Float) Type() types.Type {
-	return types.Number
+func (f Float) Type() value.Type {
+	return value.Number
 }
 
 func (f Float) String() string {
@@ -191,8 +190,8 @@ func (i Integer) String() string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
-func (i Integer) Type() types.Type {
-	return types.Number
+func (i Integer) Type() value.Type {
+	return value.Number
 }
 
 func (i Integer) ToNumber() (Number, bool) {
@@ -223,8 +222,8 @@ func (s String) String() string {
 	return "\"" + common.Escape(bytes.NewBufferString(string(s))) + "\""
 }
 
-func (s String) Type() types.Type {
-	return types.String
+func (s String) Type() value.Type {
+	return value.String
 }
 
 func (s String) ToNumber() (Number, bool) {
@@ -273,8 +272,8 @@ func (t *Table) ToInteger() (Integer, bool) {
 	return 0, false
 }
 
-func (t *Table) Type() types.Type {
-	return types.Table
+func (t *Table) Type() value.Type {
+	return value.Table
 }
 
 func (t *Table) value() {}
@@ -330,7 +329,7 @@ func (t *Table) Set(k Value, v Value) error {
 		t.m[k] = v
 		return nil
 	default:
-		if v == nil || v.Type() == types.Nil {
+		if v == nil || v.Type() == value.Nil {
 			return nil
 		}
 		t.m[k] = v
@@ -342,7 +341,7 @@ func (t *Table) expand() {
 	idx := t.array.Len() + 1
 	for {
 		val, ok := t.m[Integer(idx)]
-		if !ok || val.Type() == types.Nil {
+		if !ok || val.Type() == value.Nil {
 			break
 		}
 		delete(t.m, val)
@@ -403,8 +402,8 @@ func (f *Function) value() {}
 
 func (f *Function) String() string { return "function" }
 
-func (f *Function) Type() types.Type {
-	return types.Function
+func (f *Function) Type() value.Type {
+	return value.Function
 }
 
 func (f *Function) ToBoolean() Boolean {
@@ -429,8 +428,8 @@ func (t Thread) value() {}
 
 func (t Thread) String() string { return "thread" }
 
-func (t Thread) Type() types.Type {
-	return types.Thread
+func (t Thread) Type() value.Type {
+	return value.Thread
 }
 
 func (t Thread) ToBoolean() Boolean {
@@ -453,7 +452,7 @@ func (l *array) Set(idx int, val Value) {
 		*l = append(*l, GetNil())
 	}
 	(*l)[idx] = val
-	if val.Type() == types.Nil {
+	if val.Type() == value.Nil {
 		l.shrink()
 	}
 }
@@ -466,7 +465,7 @@ func (l *array) shrink() {
 	if len(*l) == 0 {
 		return
 	}
-	for (*l)[len(*l)-1].Type() == types.Nil {
+	for (*l)[len(*l)-1].Type() == value.Nil {
 		*l = (*l)[:len(*l)-1]
 	}
 }

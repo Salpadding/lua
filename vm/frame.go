@@ -3,9 +3,9 @@ package vm
 import (
 	"errors"
 
-	types2 "github.com/Salpadding/lua/types"
+	"github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
-	"github.com/Salpadding/lua/types/value/types"
+	"github.com/Salpadding/lua/types/value"
 )
 
 const (
@@ -18,39 +18,39 @@ const (
 	LuaRelease = LuaVersion + "." + LuaVersionRelease
 )
 
-type BinaryOperator func(a, b types2.Value) (types2.Value, bool)
+type BinaryOperator func(a, b types.Value) (types.Value, bool)
 
-type UnaryOperator func(a types2.Value) (types2.Value, bool)
+type UnaryOperator func(a types.Value) (types.Value, bool)
 
-var binaryOperators = map[types.ArithmeticOperator]BinaryOperator{
-	types.Add:        types2.Add,
-	types.Sub:        types2.Sub,
-	types.Mul:        types2.Mul,
-	types.IDiv:       types2.IDiv,
-	types.Mod:        types2.Mod,
-	types.Pow:        types2.Pow,
-	types.Div:        types2.Div,
-	types.BitwiseAnd: types2.BitwiseAnd,
-	types.BitwiseXor: types2.BitwiseXor,
-	types.BitwiseOr:  types2.BitwiseOr,
-	types.ShiftLeft:  types2.ShiftLeft,
-	types.ShiftRight: types2.ShiftRight,
+var binaryOperators = map[value.ArithmeticOperator]BinaryOperator{
+	value.Add:        types.Add,
+	value.Sub:        types.Sub,
+	value.Mul:        types.Mul,
+	value.IDiv:       types.IDiv,
+	value.Mod:        types.Mod,
+	value.Pow:        types.Pow,
+	value.Div:        types.Div,
+	value.BitwiseAnd: types.BitwiseAnd,
+	value.BitwiseXor: types.BitwiseXor,
+	value.BitwiseOr:  types.BitwiseOr,
+	value.ShiftLeft:  types.ShiftLeft,
+	value.ShiftRight: types.ShiftRight,
 }
 
-var unaryOperators = map[types.ArithmeticOperator]UnaryOperator{
-	types.UnaryMinus: types2.UnaryMinus,
-	types.BitwiseNot: types2.BitwiseNot,
+var unaryOperators = map[value.ArithmeticOperator]UnaryOperator{
+	value.UnaryMinus: types.UnaryMinus,
+	value.BitwiseNot: types.BitwiseNot,
 }
 
 // Frame 是函数调用帧
 type Frame struct {
 	*Register
-	proto    *types2.Prototype
+	proto    *types.Prototype
 	pc       int
-	returned []types2.Value
+	returned []types.Value
 }
 
-func NewFrame(prototype *types2.Prototype) *Frame {
+func NewFrame(prototype *types.Prototype) *Frame {
 	return &Frame{
 		Register: &Register{},
 		proto:    prototype,
@@ -105,7 +105,7 @@ func (f *Frame) SetTop(idx int) error {
 	}
 	if n < 0 {
 		for i := 0; i < -n; i++ {
-			if err := f.Push(types2.GetNil()); err != nil {
+			if err := f.Push(types.GetNil()); err != nil {
 				return err
 			}
 		}
@@ -113,13 +113,13 @@ func (f *Frame) SetTop(idx int) error {
 	return nil
 }
 
-func (f *Frame) TypeName(v types2.Value) string {
+func (f *Frame) TypeName(v types.Value) string {
 	return v.Type().String()
 }
 
-func (f *Frame) Type(idx int) types.Type {
+func (f *Frame) Type(idx int) value.Type {
 	if !f.IsValid(idx) {
-		return types.None
+		return value.None
 	}
 	return f.Get(idx).Type()
 }
@@ -149,7 +149,7 @@ func (f *Frame) AddPC(i int) {
 	f.pc += i
 }
 
-func (f *Frame) GetConst(idx int) (types2.Value, error) {
+func (f *Frame) GetConst(idx int) (types.Value, error) {
 	if idx < 0 || idx >= len(f.proto.Constants) {
 		return nil, errIndexOverFlow
 	}
@@ -162,24 +162,23 @@ func (f *Frame) Fetch() code.Instruction {
 	return i
 }
 
-func (f *Frame) GetRK(rk int) (types2.Value, error) {
+func (f *Frame) GetRK(rk int) (types.Value, error) {
 	if rk > 0xff {
 		return f.GetConst(rk & 0xff)
 	}
 	return f.Get(rk), nil
 }
 
-func (f *Frame) execute() ([]types2.Value, error) {
+func (f *Frame) execute() ([]types.Value, error) {
 	f.Register = NewRegister(0)
 	for {
 		ins := &Instruction{Instruction: f.Fetch()}
-		if ins.Opcode().Type == code.Return {
-			return f.returned, nil
-		}
 		if err := ins.execute(f); err != nil {
 			return nil, err
+		}
+		if ins.Opcode().Type == code.Return {
+			return f.returned, nil
 		}
 		//fmt.Printf("%s %s\n", ins.Opcode().Name, f)
 	}
 }
-

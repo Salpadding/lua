@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/Salpadding/lua/types/value/types"
+	"github.com/Salpadding/lua/types/value"
 )
 
 func FloatToInteger(f Float) (Integer, bool) {
@@ -134,17 +134,17 @@ func sigMod(f Float) int {
 	return 0
 }
 
-func toComparison(i int) types.Comparison {
+func toComparison(i int) value.Comparison {
 	if i < 0 {
-		return types.LessThan
+		return value.LessThan
 	}
 	if i > 0 {
-		return types.GreaterThan
+		return value.GreaterThan
 	}
-	return types.Equal
+	return value.Equal
 }
 
-func Compare(a, b Value) (types.Comparison, bool) {
+func Compare(a, b Value) (value.Comparison, bool) {
 	switch x := a.(type) {
 	case String:
 		bs, ok := b.(String)
@@ -242,7 +242,7 @@ func BitwiseOr(a, b Value) (Value, bool) {
 func equal(a, b Value) bool {
 	switch x := a.(type) {
 	case *Nil:
-		return b.Type() == types.Nil
+		return b.Type() == value.Nil
 	case Boolean:
 		bb, ok := b.(Boolean)
 		return ok && x == bb
@@ -251,16 +251,16 @@ func equal(a, b Value) bool {
 		return ok && bs == x
 	case Integer, Float:
 		cmp, _ := Compare(a, b)
-		return cmp == types.Equal
+		return cmp == value.Equal
 	default:
 		return a == b
 	}
 }
 
-func Equal(a, b Value) (types.Comparison, bool) {
+func Equal(a, b Value) (value.Comparison, bool) {
 	ok := equal(a, b)
 	if ok {
-		return types.Equal, true
+		return value.Equal, true
 	}
 	return 0, true
 }
