@@ -361,10 +361,13 @@ func (ins *Instruction) setList(f *Frame) error {
 	} else {
 		c = f.Fetch().Ax()
 	}
-
-	if b == 0 {
+	bIsZero := b == 0
+	if bIsZero {
 		b = -1 - a - 1
-		
+		_, err := f.Pop()
+		if err != nil{
+			return err
+		}
 	}
 
 	tb, ok := f.Get(a).(*types.Table)
@@ -377,6 +380,9 @@ func (ins *Instruction) setList(f *Frame) error {
 		if err := tb.Set(types.Integer(idx), f.Get(a+j)); err != nil {
 			return err
 		}
+	}
+	if bIsZero{
+		for j := vm.
 	}
 	return nil
 }
