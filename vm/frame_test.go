@@ -90,10 +90,7 @@ func TestBin(t *testing.T) {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	frame := &Frame{
-		proto: proto,
-		pc:    0,
-	}
+	frame := NewFrame(proto)
 	_, err = frame.execute()
 	assert.NoError(t, err)
 }
@@ -106,10 +103,7 @@ func TestBin2(t *testing.T) {
 	//	fmt.Println(proto.Code[i].OpName())
 	//}
 	assert.NoError(t, err)
-	frame := &Frame{
-		proto: proto,
-		pc:    0,
-	}
+	frame := NewFrame(proto)
 	_, err = frame.execute()
 	assert.NoError(t, err)
 }
