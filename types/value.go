@@ -417,6 +417,7 @@ func (n Native) ToBoolean() Boolean {
 
 type Function struct {
 	*Prototype
+	UpValues []Value
 }
 
 func (f *Function) ToFloat() (Float, bool) {

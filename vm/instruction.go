@@ -113,6 +113,14 @@ func (ins *Instruction) execute(f *Frame) error {
 		return ins.call(f)
 	case code.Self:
 		return ins.self(f)
+	case code.GetUpValue:
+		return ins.getUpValue(f)
+	case code.GetTableUpValue:
+		return ins.getTableUpValue(f)
+	case code.SetUpValue:
+		return ins.setUpValue(f)
+	case code.SetTableUpValue:
+		return ins.setTableUpValue(f)
 	default:
 		return nil
 	}
@@ -400,7 +408,7 @@ func (ins *Instruction) getTable(vm *Frame) error {
 // R(A) := closure(KPROTO[Bx])
 func (ins *Instruction) closure(f *Frame) error {
 	a, bx := ins.ABx()
-	proto := f.proto.Prototypes[bx]
+	proto := f.fn.Prototypes[bx]
 	fn := &types.Function{Prototype: proto}
 	return f.Set(a, fn)
 }
@@ -425,13 +433,13 @@ func (ins *Instruction) call(f *Frame) error {
 	)
 	switch fn := f.Get(a).(type) {
 	case *types.Function:
-		newFrame := f.vm.NewFrame(fn.Prototype)
+		newFrame := f.vm.NewFrame(fn)
 		// 参数传递
 		err = newFrame.PushN(int(fn.NumParams), args...)
 		if err != nil {
 			return err
 		}
-		if len(args) > int(fn.NumParams) && f.proto.IsVararg {
+		if len(args) > int(fn.NumParams) && f.fn.IsVararg {
 			newFrame.varArgs = args[fn.NumParams:]
 		}
 		values, err = newFrame.execute()
@@ -509,30 +517,61 @@ func (ins *Instruction) self(f *Frame) error {
 // R(A) := UpValue[B]
 func (ins *Instruction) getUpValue(f *Frame) error {
 	a, b, _ := ins.ABC()
-	return f.Copy(a, f.vm.upValueIndex(b))
+	if b < 0 || b >= len(f.fn.UpValues) {
+		return f.Set(a, types.GetNil())
+	}
+	return f.Set(a, f.fn.UpValues[b])
 }
 
 // UpValue[B] := R(A)
 func (ins *Instruction) setUpValue(f *Frame) error {
 	a, b, _ := ins.ABC()
-	return f.Copy(f.vm.upValueIndex(b), a)
+	if b < 0 {
+		b += len(f.fn.UpValues)
+	}
+	if b >= len(f.fn.UpValues) {
+		tmp := f.fn.UpValues
+		f.fn.UpValues = make([]types.Value, b+1)
+		copy(f.fn.UpValues, tmp)
+	}
+	f.fn.UpValues[b] = f.Get(a)
+	return nil
 }
 
-
-// UpValue[A][RK(B)] := RK(C) 
-func(ins *Instruction) getTableUpValue(f *Frame) error{
+// R(A) := UpValue[B][RK(C)]
+func (ins *Instruction) getTableUpValue(f *Frame) error {
 	a, b, c := ins.ABC()
-	v, err := f.GetRK(c)
-	if err != nil{
+	k, err := f.GetRK(c)
+	if err != nil {
 		return err
 	}
-	tb, ok := f.Get(f.vm.upValueIndex(b)).(*types.Table)
-	if !ok{
+	tb, ok := f.fn.UpValues[b].(*types.Table)
+	if !ok {
 		return errInvalidOperand
 	}
-	v, err = tb.Get(v)
-	if err != nil{
+	v, err := tb.Get(k)
+	if err != nil {
 		return err
 	}
 	return f.Set(a, v)
+}
+
+// UpValue[A][RK(B)] := RK(C)
+func (ins *Instruction) setTableUpValue(f *Frame) error {
+	a, b, c := ins.ABC()
+
+	//vm.CheckStack(2)
+	k, err := f.GetRK(b) // ~/rk[b]
+	if err != nil {
+		return err
+	}
+	v, err := f.GetRK(c) // ~/rk[b]/rk[c]
+	if err != nil {
+		return err
+	}
+	tb, ok := f.fn.UpValues[a].(*types.Table)
+	if !ok {
+		return errInvalidOperand
+	}
+	return tb.Set(k, v)
 }

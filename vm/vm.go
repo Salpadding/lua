@@ -25,10 +25,6 @@ type LuaVM struct {
 	registry *types.Table // lua 注册表
 }
 
-func (vm *LuaVM) upValueIndex(idx int) int {
-	return LuaRegistryIndex - idx
-}
-
 func (vm *LuaVM) Load(rd io.Reader) error {
 	proto, err := types.ReadPrototype(rd)
 	if err != nil {
@@ -36,8 +32,12 @@ func (vm *LuaVM) Load(rd io.Reader) error {
 	}
 	vm.main = &Frame{
 		Register: &Register{},
-		proto:    proto,
-		pc:       0,
+		fn: &types.Function{
+			Prototype: proto,
+			UpValues: []types.Value{},
+		},
+		pc: 0,
+		vm: vm,
 	}
 	return nil
 }
@@ -50,10 +50,10 @@ func (vm *LuaVM) Execute() error {
 	return nil
 }
 
-func (vm *LuaVM) NewFrame(proto *types.Prototype) *Frame {
+func (vm *LuaVM) NewFrame(fn *types.Function) *Frame {
 	return &Frame{
 		vm:       vm,
 		Register: &Register{},
-		proto:    proto,
+		fn:       fn,
 	}
 }
