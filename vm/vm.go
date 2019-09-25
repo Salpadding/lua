@@ -1,13 +1,32 @@
 package vm
 
 import (
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/Salpadding/lua/types"
 )
 
+var natives = map[types.Value]types.Native{
+	types.String("print"): func(args ...types.Value) (values []types.Value, e error) {
+		for _, v := range args {
+			fmt.Println(v)
+		}
+		return []types.Value{types.GetNil()}, nil
+	},
+	types.String("fail"): func(args ...types.Value) (values []types.Value, e error) {
+		return []types.Value{types.GetNil()}, errors.New("fail")
+	},
+}
+
 type LuaVM struct {
-	main *Frame
+	main     *Frame       // 主函数帧栈
+	registry *types.Table // lua 注册表
+}
+
+func (vm *LuaVM) upValueIndex(idx int) int {
+	return LuaRegistryIndex - idx
 }
 
 func (vm *LuaVM) Load(rd io.Reader) error {
@@ -31,3 +50,10 @@ func (vm *LuaVM) Execute() error {
 	return nil
 }
 
+func (vm *LuaVM) NewFrame(proto *types.Prototype) *Frame {
+	return &Frame{
+		vm:       vm,
+		Register: &Register{},
+		proto:    proto,
+	}
+}

@@ -44,9 +44,9 @@ type Instruction struct {
 }
 
 // R(A) := R(B)
-func (ins *Instruction) move(vm *Frame) error {
+func (ins *Instruction) move(f *Frame) error {
 	dst, src, _ := ins.ABC()
-	return vm.Copy(dst, src)
+	return f.Copy(dst, src)
 }
 
 func (ins *Instruction) jmp(vm *Frame) error {
@@ -58,71 +58,71 @@ func (ins *Instruction) jmp(vm *Frame) error {
 	return nil
 }
 
-func (ins *Instruction) execute(vm *Frame) error {
+func (ins *Instruction) execute(f *Frame) error {
 	_, ok := opMapping[ins.Opcode().Type]
 	if ok {
-		return ins.arithmetic(vm)
+		return ins.arithmetic(f)
 	}
 	switch ins.Opcode().Type {
 	case code.Move:
-		return ins.move(vm)
+		return ins.move(f)
 	case code.Jmp:
-		return ins.jmp(vm)
+		return ins.jmp(f)
 	case code.LoadK:
-		return ins.loadK(vm)
+		return ins.loadK(f)
 	case code.LoadKX:
-		return ins.loadKx(vm)
+		return ins.loadKx(f)
 	case code.LoadBool:
-		return ins.loadBool(vm)
+		return ins.loadBool(f)
 	case code.LoadNil:
-		return ins.loadNil(vm)
+		return ins.loadNil(f)
 	case code.LogicalNot:
-		return ins.not(vm)
+		return ins.not(f)
 	case code.Len:
-		return ins.len(vm)
+		return ins.len(f)
 	case code.Concat:
-		return ins.concat(vm)
+		return ins.concat(f)
 	case code.Equal, code.LessThan, code.LessThanOrEqual:
 		op := cmpMapping[ins.Opcode().Type]
-		return ins.compare(vm, op)
+		return ins.compare(f, op)
 	case code.Test:
-		return ins.test(vm)
+		return ins.test(f)
 	case code.TestSet:
-		return ins.testSet(vm)
+		return ins.testSet(f)
 	case code.ForLoop:
-		return ins.forLoop(vm)
+		return ins.forLoop(f)
 	case code.ForPrep:
-		return ins.forPrep(vm)
+		return ins.forPrep(f)
 	case code.NewTable:
-		return ins.newTable(vm)
+		return ins.newTable(f)
 	case code.GetTable:
-		return ins.getTable(vm)
+		return ins.getTable(f)
 	case code.SetTable:
-		return ins.setTable(vm)
+		return ins.setTable(f)
 	case code.SetList:
-		return ins.setList(vm)
+		return ins.setList(f)
 	case code.Return:
-		return ins.iReturn(vm)
+		return ins.iReturn(f)
 	case code.Closure:
-		return ins.closure(vm)
+		return ins.closure(f)
 	case code.Call:
-		return ins.call(vm)
+		return ins.call(f)
 	case code.VarArg:
-		return ins.varArgs(vm)
+		return ins.varArgs(f)
 	case code.TailCall:
-		return ins.call(vm)
+		return ins.call(f)
 	case code.Self:
-		return ins.self(vm)
+		return ins.self(f)
 	default:
 		return nil
 	}
 }
 
 // R(A), R(A+1), ..., R(A+B) := nil
-func (ins *Instruction) loadNil(vm *Frame) error {
+func (ins *Instruction) loadNil(frame *Frame) error {
 	a, b, _ := ins.ABC()
 	for i := a; i <= a+b; i++ {
-		if err := vm.Set(i, types.GetNil()); err != nil {
+		if err := frame.Set(i, types.GetNil()); err != nil {
 			return err
 		}
 	}
@@ -361,7 +361,7 @@ func (ins *Instruction) setList(f *Frame) error {
 	} else {
 		c = f.Fetch().Ax()
 	}
-	if b == 0{
+	if b == 0 {
 		b = f.GetTop() - a
 	}
 
@@ -419,21 +419,32 @@ func (ins *Instruction) iReturn(f *Frame) error {
 func (ins *Instruction) call(f *Frame) error {
 	a, b, c := ins.ABC()
 	args := f.Slice(a+1, a+b)
-	fn, ok := f.Get(a).(*types.Function)
-	if !ok {
+	var (
+		values []types.Value
+		err    error
+	)
+	switch fn := f.Get(a).(type) {
+	case *types.Function:
+		newFrame := f.vm.NewFrame(fn.Prototype)
+		// 参数传递
+		err = newFrame.PushN(int(fn.NumParams), args...)
+		if err != nil {
+			return err
+		}
+		if len(args) > int(fn.NumParams) && f.proto.IsVararg {
+			newFrame.varArgs = args[fn.NumParams:]
+		}
+		values, err = newFrame.execute()
+	case types.Native:
+		values, err = fn(args...)
+		if err != nil {
+			return err
+		}
+	default:
 		return errInvalidOperand
 	}
-	newFrame := NewFrame(fn.Prototype)
-	// 参数传递
-	if err := newFrame.PushN(int(fn.NumParams), args...); err != nil {
-		return err
-	}
-	if len(args) > int(fn.NumParams) && f.proto.IsVararg {
-		newFrame.varArgs = args[fn.NumParams:]
-	}
-	values, err := newFrame.execute()
 	if err != nil || len(values) != c-1 {
-		return err
+		return errInvalidOperand
 	}
 	for i := range values {
 		err = f.Set(a+i, values[i])
@@ -490,6 +501,37 @@ func (ins *Instruction) self(f *Frame) error {
 	}
 	v, err := tb.Get(k)
 	if err != nil {
+		return err
+	}
+	return f.Set(a, v)
+}
+
+// R(A) := UpValue[B]
+func (ins *Instruction) getUpValue(f *Frame) error {
+	a, b, _ := ins.ABC()
+	return f.Copy(a, f.vm.upValueIndex(b))
+}
+
+// UpValue[B] := R(A)
+func (ins *Instruction) setUpValue(f *Frame) error {
+	a, b, _ := ins.ABC()
+	return f.Copy(f.vm.upValueIndex(b), a)
+}
+
+
+// UpValue[A][RK(B)] := RK(C) 
+func(ins *Instruction) getTableUpValue(f *Frame) error{
+	a, b, c := ins.ABC()
+	v, err := f.GetRK(c)
+	if err != nil{
+		return err
+	}
+	tb, ok := f.Get(f.vm.upValueIndex(b)).(*types.Table)
+	if !ok{
+		return errInvalidOperand
+	}
+	v, err = tb.Get(v)
+	if err != nil{
 		return err
 	}
 	return f.Set(a, v)

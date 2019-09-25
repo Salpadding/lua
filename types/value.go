@@ -377,6 +377,44 @@ func (t *Table) Get(k Value) (Value, error) {
 	return GetNil(), nil
 }
 
+type NativeClosure struct {
+	Native
+	upValues []Value
+}
+
+type Native func(args ...Value) ([]Value, error)
+
+func (n Native) value() {
+}
+
+func (n Native) String() string {
+	return "function () \n native code \n end"
+}
+
+func (n Native) Type() value.Type {
+	return value.Function
+}
+
+func (n Native) ToNumber() (Number, bool) {
+	return nil, false
+}
+
+func (n Native) ToInteger() (Integer, bool) {
+	return 0, false
+}
+
+func (n Native) ToFloat() (Float, bool) {
+	return 0, false
+}
+
+func (n Native) ToString() (string, bool) {
+	return "", false
+}
+
+func (n Native) ToBoolean() Boolean {
+	return true
+}
+
 type Function struct {
 	*Prototype
 }
@@ -388,7 +426,6 @@ func (f *Function) ToFloat() (Float, bool) {
 func (f *Function) ToString() (string, bool) {
 	return "", false
 }
-
 
 func (f *Function) ToNumber() (Number, bool) {
 	return nil, false

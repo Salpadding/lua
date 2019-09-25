@@ -17,6 +17,10 @@ const (
 
 	LuaVersion = "Lua " + LuaVersionMajor + "." + LuaVersionMINOR
 	LuaRelease = LuaVersion + "." + LuaVersionRelease
+
+	// 伪索引支持
+	LuaMaxStack      = 1000000
+	LuaRegistryIndex = -LuaMaxStack - 1000
 )
 
 type BinaryOperator func(a, b types.Value) (types.Value, bool)
@@ -45,19 +49,13 @@ var unaryOperators = map[value.ArithmeticOperator]UnaryOperator{
 
 // Frame 是函数调用帧
 type Frame struct {
-	*Register
+	vm *LuaVM
+
+	*Register // 寄存器
 	proto    *types.Prototype
 	pc       int
 	varArgs  []types.Value
 	returned []types.Value
-}
-
-func NewFrame(prototype *types.Prototype) *Frame {
-	return &Frame{
-		Register: &Register{},
-		proto:    prototype,
-		pc:       0,
-	}
 }
 
 func (f *Frame) Close() {}
