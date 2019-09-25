@@ -426,6 +426,9 @@ func (ins *Instruction) iReturn(f *Frame) error {
 // R(A), ... ,R(A+C-2) := R(A)(R(A+1), ... ,R(A+B-1))
 func (ins *Instruction) call(f *Frame) error {
 	a, b, c := ins.ABC()
+	if b == 0 {
+		b = f.GetTop() - a + 1
+	}
 	args := f.Slice(a+1, a+b)
 	var (
 		values []types.Value
