@@ -409,7 +409,7 @@ func (ins *Instruction) getTable(vm *Frame) error {
 func (ins *Instruction) closure(f *Frame) error {
 	a, bx := ins.ABx()
 	proto := f.fn.Prototypes[bx]
-	fn := &types.Function{Prototype: proto}
+	fn := &types.Function{Prototype: proto, UpValues: []types.Value{}}
 	return f.Set(a, fn)
 }
 
@@ -452,7 +452,7 @@ func (ins *Instruction) call(f *Frame) error {
 		return errInvalidOperand
 	}
 	for i := range values {
-		if a + i == a + c - 1{
+		if a+i == a+c-1 {
 			break
 		}
 		err = f.Set(a+i, values[i])
@@ -549,9 +549,9 @@ func (ins *Instruction) getTableUpValue(f *Frame) error {
 	if err != nil {
 		return err
 	}
-	if b == 0{
+	if b == 0 {
 		tb = f.vm.global
-	}else{
+	} else {
 		tb, ok = f.fn.UpValues[b].(*types.Table)
 	}
 	if !ok {
@@ -571,9 +571,9 @@ func (ins *Instruction) setTableUpValue(f *Frame) error {
 		tb *types.Table
 		ok = true
 	)
-	if a == 0{
+	if a == 0 {
 		tb = f.vm.global
-	}else{
+	} else {
 		tb, ok = f.fn.UpValues[a].(*types.Table)
 	}
 	if !ok {
