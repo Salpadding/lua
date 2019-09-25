@@ -451,10 +451,10 @@ func (ins *Instruction) call(f *Frame) error {
 	default:
 		return errInvalidOperand
 	}
-	if err != nil || len(values) != c-1 {
-		return errInvalidOperand
-	}
 	for i := range values {
+		if a + i == a + c - 1{
+			break
+		}
 		err = f.Set(a+i, values[i])
 		if err != nil {
 			return err
@@ -541,11 +541,19 @@ func (ins *Instruction) setUpValue(f *Frame) error {
 // R(A) := UpValue[B][RK(C)]
 func (ins *Instruction) getTableUpValue(f *Frame) error {
 	a, b, c := ins.ABC()
+	var (
+		tb *types.Table
+		ok = true
+	)
 	k, err := f.GetRK(c)
 	if err != nil {
 		return err
 	}
-	tb, ok := f.fn.UpValues[b].(*types.Table)
+	if b == 0{
+		tb = f.vm.global
+	}else{
+		tb, ok = f.fn.UpValues[b].(*types.Table)
+	}
 	if !ok {
 		return errInvalidOperand
 	}
@@ -559,7 +567,18 @@ func (ins *Instruction) getTableUpValue(f *Frame) error {
 // UpValue[A][RK(B)] := RK(C)
 func (ins *Instruction) setTableUpValue(f *Frame) error {
 	a, b, c := ins.ABC()
-
+	var (
+		tb *types.Table
+		ok = true
+	)
+	if a == 0{
+		tb = f.vm.global
+	}else{
+		tb, ok = f.fn.UpValues[a].(*types.Table)
+	}
+	if !ok {
+		return errInvalidOperand
+	}
 	//vm.CheckStack(2)
 	k, err := f.GetRK(b) // ~/rk[b]
 	if err != nil {
@@ -568,10 +587,6 @@ func (ins *Instruction) setTableUpValue(f *Frame) error {
 	v, err := f.GetRK(c) // ~/rk[b]/rk[c]
 	if err != nil {
 		return err
-	}
-	tb, ok := f.fn.UpValues[a].(*types.Table)
-	if !ok {
-		return errInvalidOperand
 	}
 	return tb.Set(k, v)
 }
