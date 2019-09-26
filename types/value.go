@@ -508,3 +508,7 @@ type ValuePointer struct{
 	Value
 }
 
+func(v *ValuePointer) value() error{
+	return nil
+}
+

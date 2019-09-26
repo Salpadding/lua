@@ -545,7 +545,7 @@ func (ins *Instruction) getUpValue(f *Frame) error {
 	if b < 0 || b >= len(f.fn.UpValues) {
 		return f.Set(a, types.GetNil())
 	}
-	return f.Set(a, *f.fn.UpValues[b])
+	return f.Set(a, f.fn.UpValues[b].Value)
 }
 
 // UpValue[B] := R(A)
