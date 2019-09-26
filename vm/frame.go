@@ -2,6 +2,7 @@ package vm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
@@ -172,13 +173,13 @@ func (f *Frame) GetRK(rk int) (types.Value, error) {
 func (f *Frame) execute() ([]types.Value, error) {
 	for {
 		ins := &Instruction{Instruction: f.Fetch()}
-		//name := ins.Opcode().Name
+		name := ins.Opcode().Name
 		if err := ins.execute(f); err != nil {
 			return nil, err
 		}
 		if ins.Opcode().Type == code.Return {
 			return f.returned, nil
 		}
-		//fmt.Printf("%s %s\n", name, f)
+		fmt.Printf("%s %s\n", name, f)
 	}
 }
