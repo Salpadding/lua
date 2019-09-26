@@ -16,13 +16,7 @@ var natives = map[types.Value]types.Native{
 		return []types.Value{types.GetNil()}, nil
 	},
 	types.String("fail"): func(args ...types.Value) (values []types.Value, e error) {
-		for _, arg := range args{
-			if !arg.ToBoolean(){
-				return []types.Value{types.GetNil()}, errors.New("fail")
-			}
-		}
-		fmt.Println("success")
-		return []types.Value{types.GetNil()}, nil
+		return []types.Value{types.GetNil()}, errors.New("assertion fail")
 	},
 }
 

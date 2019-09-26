@@ -12,7 +12,7 @@ func TestCall(t *testing.T){
 	assert.NoError(t, err)
 	var vm LuaVM
 	assert.NoError(t, vm.Load(f))
-	assert.NoError(t, vm.Execute())
+	assert.Error(t, vm.Execute()) // assertion fail error, native function
 }
 
 func TestUpValue(t *testing.T){

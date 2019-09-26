@@ -468,6 +468,9 @@ func (ins *Instruction) call(f *Frame) error {
 			newFrame.varArgs = args[fn.NumParams:]
 		}
 		values, err = newFrame.execute()
+		if err != nil{
+			return err
+		}
 	case types.Native:
 		values, err = fn(args...)
 		if err != nil {
