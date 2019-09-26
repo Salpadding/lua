@@ -52,7 +52,7 @@ type Frame struct {
 	vm *LuaVM
 
 	*Register // 寄存器
-	proto    *types.Prototype
+	fn       *types.Function
 	pc       int
 	varArgs  []types.Value
 	returned []types.Value
@@ -150,14 +150,14 @@ func (f *Frame) AddPC(i int) {
 }
 
 func (f *Frame) GetConst(idx int) (types.Value, error) {
-	if idx < 0 || idx >= len(f.proto.Constants) {
+	if idx < 0 || idx >= len(f.fn.Constants) {
 		return nil, errIndexOverFlow
 	}
-	return f.proto.Constants[idx], nil
+	return f.fn.Constants[idx], nil
 }
 
 func (f *Frame) Fetch() code.Instruction {
-	i := f.proto.Code[f.pc]
+	i := f.fn.Code[f.pc]
 	f.pc++
 	return i
 }

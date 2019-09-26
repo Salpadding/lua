@@ -85,26 +85,16 @@ func TestArithmetic(t *testing.T) {
 func TestBin(t *testing.T) {
 	f, err := os.Open("testdata/luac.out")
 	assert.NoError(t, err)
-	proto, err := types.ReadPrototype(f)
-	//for i := range proto.Code {
-	//	fmt.Println(proto.Code[i].OpName())
-	//}
-	assert.NoError(t, err)
-	frame := NewFrame(proto)
-	_, err = frame.execute()
-	assert.NoError(t, err)
+	var vm LuaVM
+	assert.NoError(t, vm.Load(f))
+	assert.NoError(t, vm.Execute())
 }
 
 func TestBin2(t *testing.T) {
 	f, err := os.Open("testdata/test1.o")
 	assert.NoError(t, err)
-	proto, err := types.ReadPrototype(f)
-	//for i := range proto.Code {
-	//	fmt.Println(proto.Code[i].OpName())
-	//}
-	assert.NoError(t, err)
-	frame := NewFrame(proto)
-	_, err = frame.execute()
-	assert.NoError(t, err)
+	var vm LuaVM
+	assert.NoError(t, vm.Load(f))
+	assert.NoError(t, vm.Execute())
 }
 

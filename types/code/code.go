@@ -36,9 +36,9 @@ const (
 	LoadBool
 	LoadNil
 	GetUpValue
-	GetTableUp
+	GetTableUpValue
 	GetTable
-	SetTableUp
+	SetTableUpValue
 	SetUpValue
 	SetTable
 	NewTable
