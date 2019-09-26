@@ -377,10 +377,6 @@ func (t *Table) Get(k Value) (Value, error) {
 	return GetNil(), nil
 }
 
-type NativeClosure struct {
-	Native
-	upValues []Value
-}
 
 type Native func(args ...Value) ([]Value, error)
 
@@ -417,7 +413,7 @@ func (n Native) ToBoolean() Boolean {
 
 type Function struct {
 	*Prototype
-	UpValues []Value
+	UpValues []*ValuePointer
 }
 
 func (f *Function) ToFloat() (Float, bool) {
@@ -507,3 +503,8 @@ func (l *array) shrink() {
 		*l = (*l)[:len(*l)-1]
 	}
 }
+
+type ValuePointer struct{
+	Value
+}
+

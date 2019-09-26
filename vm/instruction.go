@@ -409,7 +409,24 @@ func (ins *Instruction) getTable(vm *Frame) error {
 func (ins *Instruction) closure(f *Frame) error {
 	a, bx := ins.ABx()
 	proto := f.fn.Prototypes[bx]
-	fn := &types.Function{Prototype: proto, UpValues: []types.Value{}}
+	fn := &types.Function{Prototype: proto, UpValues: make([]*types.ValuePointer, len(proto.UpValues))}
+	for i, uvInfo := range proto.UpValues {
+		uvIdx := int(uvInfo[1])
+		inStack := int(uvInfo[0])
+		if inStack != 1{
+			fn.UpValues[i] = f.fn.UpValues[uvIdx]
+			continue
+		}
+		if f.openUpValues == nil{
+			f.openUpValues = map[int]*types.ValuePointer{}
+		}
+		if v, ok := f.openUpValues[uvIdx]; ok{
+			fn.UpValues[i] = v
+			continue
+		}
+		fn.UpValues[i] = &types.ValuePointer{Value: f.Get(uvIdx)}
+		f.openUpValues[uvIdx] = fn.UpValues[i]
+	}
 	return f.Set(a, fn)
 }
 
@@ -523,7 +540,7 @@ func (ins *Instruction) getUpValue(f *Frame) error {
 	if b < 0 || b >= len(f.fn.UpValues) {
 		return f.Set(a, types.GetNil())
 	}
-	return f.Set(a, f.fn.UpValues[b])
+	return f.Set(a, *f.fn.UpValues[b])
 }
 
 // UpValue[B] := R(A)
@@ -534,10 +551,10 @@ func (ins *Instruction) setUpValue(f *Frame) error {
 	}
 	if b >= len(f.fn.UpValues) {
 		tmp := f.fn.UpValues
-		f.fn.UpValues = make([]types.Value, b+1)
+		f.fn.UpValues = make([]*types.ValuePointer, b+1)
 		copy(f.fn.UpValues, tmp)
 	}
-	f.fn.UpValues[b] = f.Get(a)
+	f.fn.UpValues[b] = &types.ValuePointer{Value: f.Get(a)}
 	return nil
 }
 
@@ -555,7 +572,7 @@ func (ins *Instruction) getTableUpValue(f *Frame) error {
 	if b == 0 {
 		tb = f.vm.global
 	} else {
-		tb, ok = f.fn.UpValues[b].(*types.Table)
+		tb, ok = f.fn.UpValues[b].Value.(*types.Table)
 	}
 	if !ok {
 		return errInvalidOperand
@@ -577,7 +594,7 @@ func (ins *Instruction) setTableUpValue(f *Frame) error {
 	if a == 0 {
 		tb = f.vm.global
 	} else {
-		tb, ok = f.fn.UpValues[a].(*types.Table)
+		tb, ok = f.fn.UpValues[a].Value.(*types.Table)
 	}
 	if !ok {
 		return errInvalidOperand

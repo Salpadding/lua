@@ -14,3 +14,11 @@ func TestCall(t *testing.T){
 	assert.NoError(t, vm.Load(f))
 	assert.NoError(t, vm.Execute())
 }
+
+func TestUpValue(t *testing.T){
+	f, err := os.Open("testdata/test4.o")
+	assert.NoError(t, err)
+	var vm LuaVM
+	assert.NoError(t, vm.Load(f))
+	assert.NoError(t, vm.Execute())
+}

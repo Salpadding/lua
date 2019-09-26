@@ -2,7 +2,6 @@ package vm
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
@@ -52,10 +51,11 @@ type Frame struct {
 	vm *LuaVM
 
 	*Register // 寄存器
-	fn       *types.Function
-	pc       int
-	varArgs  []types.Value
-	returned []types.Value
+	fn           *types.Function
+	openUpValues map[int]*types.ValuePointer
+	pc           int
+	varArgs      []types.Value
+	returned     []types.Value
 }
 
 func (f *Frame) Close() {}
@@ -172,13 +172,13 @@ func (f *Frame) GetRK(rk int) (types.Value, error) {
 func (f *Frame) execute() ([]types.Value, error) {
 	for {
 		ins := &Instruction{Instruction: f.Fetch()}
-		name := ins.Opcode().Name
+		//name := ins.Opcode().Name
 		if err := ins.execute(f); err != nil {
 			return nil, err
 		}
 		if ins.Opcode().Type == code.Return {
 			return f.returned, nil
 		}
-		fmt.Printf("%s %s\n", name, f)
+		//fmt.Printf("%s %s\n", name, f)
 	}
 }

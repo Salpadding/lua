@@ -41,19 +41,22 @@ func (vm *LuaVM) Load(rd io.Reader) error {
 		Register: &Register{},
 		fn: &types.Function{
 			Prototype: proto,
-			UpValues:  []types.Value{},
+			UpValues:  make([]*types.ValuePointer, len(proto.UpValues)),
 		},
 		pc: 0,
 		vm: vm,
 	}
+	for i := range vm.main.fn.UpValues{
+		vm.main.fn.UpValues[i] = &types.ValuePointer{Value: types.GetNil()}
+	}
 	vm.registry = types.NewTable()
+	// global
+	vm.global = types.NewTable()
 	for k, v := range natives {
-		if err = vm.registry.Set(k, v); err != nil {
+		if err = vm.global.Set(k, v); err != nil {
 			return err
 		}
 	}
-	// global
-	vm.global = types.NewTable()
 	if err = vm.registry.Set(types.String("_ENV"), vm.global); err != nil {
 		return err
 	}
