@@ -519,7 +519,7 @@ func (ins *Instruction) setUpValue(f *Frame) error {
 }
 
 
-// UpValue[A][RK(B)] := RK(C) 
+// UpValue[A][RK(B)] := RK(C)
 func(ins *Instruction) getTableUpValue(f *Frame) error{
 	a, b, c := ins.ABC()
 	v, err := f.GetRK(c)
