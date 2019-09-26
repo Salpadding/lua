@@ -2,7 +2,6 @@ package vm
 
 import (
 	"bytes"
-	"errors"
 
 	"github.com/Salpadding/lua/types"
 	"github.com/Salpadding/lua/types/code"
@@ -49,11 +48,17 @@ func (ins *Instruction) move(f *Frame) error {
 	return f.Copy(dst, src)
 }
 
-func (ins *Instruction) jmp(vm *Frame) error {
+func (ins *Instruction) jmp(f *Frame) error {
 	a, sBx := ins.AsBx()
-	vm.AddPC(sBx)
-	if a != 0 {
-		return errors.New("todo")
+	f.AddPC(sBx)
+	if a == 0 {
+		return nil
+	}
+	for i := range f.openUpValues{
+		if i < a - 1{
+			continue
+		}
+		delete(f.openUpValues, i)
 	}
 	return nil
 }
