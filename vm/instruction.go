@@ -40,6 +40,7 @@ var cmpMapping = map[code.Type]value.Comparison{
 
 type Instruction struct {
 	code.Instruction
+	vm *LuaVM
 }
 
 // R(A) := R(B)
@@ -67,6 +68,9 @@ func (ins *Instruction) execute(f *Frame) error {
 	_, ok := opMapping[ins.Opcode().Type]
 	if ok {
 		return ins.arithmetic(f)
+	}
+	for _, hk := range ins.vm.hooks{
+		hk(ins.Opcode())
 	}
 	switch ins.Opcode().Type {
 	case code.Move:

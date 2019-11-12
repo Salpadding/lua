@@ -86,8 +86,11 @@ func TestBin(t *testing.T) {
 	f, err := os.Open("testdata/luac.out")
 	assert.NoError(t, err)
 	var vm LuaVM
+	var counter gasCounter
+	vm.hooks = []Hook{counter.hook}
 	assert.NoError(t, vm.Load(f))
 	assert.NoError(t, vm.Execute())
+	fmt.Print(counter.gas)
 }
 
 func TestBin2(t *testing.T) {

@@ -3,6 +3,7 @@ package vm
 import (
 	"errors"
 	"fmt"
+	"github.com/Salpadding/lua/types/code"
 	"io"
 
 	"github.com/Salpadding/lua/types"
@@ -20,10 +21,21 @@ var natives = map[types.Value]types.Native{
 	},
 }
 
+type Hook func(code *code.OpCode)
+
+type gasCounter struct{
+	gas int
+}
+
+func(g *gasCounter) hook(code *code.OpCode){
+	g.gas += 50
+}
+
 type LuaVM struct {
 	main     *Frame       // 主函数帧栈
 	registry *types.Table // lua 注册表
 	global   *types.Table // 全局变量
+	hooks    []Hook
 }
 
 func (vm *LuaVM) Load(rd io.Reader) error {
@@ -40,7 +52,7 @@ func (vm *LuaVM) Load(rd io.Reader) error {
 		pc: 0,
 		vm: vm,
 	}
-	for i := range vm.main.fn.UpValues{
+	for i := range vm.main.fn.UpValues {
 		vm.main.fn.UpValues[i] = &types.ValuePointer{Value: types.GetNil()}
 	}
 	vm.registry = types.NewTable()

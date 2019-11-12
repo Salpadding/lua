@@ -171,7 +171,7 @@ func (f *Frame) GetRK(rk int) (types.Value, error) {
 
 func (f *Frame) execute() ([]types.Value, error) {
 	for {
-		ins := &Instruction{Instruction: f.Fetch()}
+		ins := &Instruction{Instruction: f.Fetch(), vm:f.vm}
 		//name := ins.Opcode().Name
 		if err := ins.execute(f); err != nil {
 			return nil, err

@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -19,6 +20,10 @@ func TestUpValue(t *testing.T){
 	f, err := os.Open("testdata/test4.o")
 	assert.NoError(t, err)
 	var vm LuaVM
+	counter := &gasCounter{}
+	vm.hooks = []Hook{counter.hook}
 	assert.NoError(t, vm.Load(f))
 	assert.NoError(t, vm.Execute())
+	fmt.Print(counter.gas)
+
 }
